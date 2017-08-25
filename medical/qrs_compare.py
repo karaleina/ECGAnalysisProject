@@ -7,11 +7,10 @@ class QRSCompare(object):
         pass
 
    def compare_segmentation(self, reference=None, test=None,
-                            sampling_rate=250, tol_time=0.05):
+                            sampling_ratio=250, tol_time=0.05):
 
         # Tol time to samples
-        tol_time = sampling_rate * tol_time
-        print("Samples_tolaration: " + str(tol_time))
+        tol_time = sampling_ratio * tol_time
 
         max_test = max(test)
         min_test = min(test)
