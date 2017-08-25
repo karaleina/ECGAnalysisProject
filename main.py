@@ -1,5 +1,5 @@
 from parsers import ecg_recording_data_parser
-from medical import qrs_detector, qrs_compare
+from medical import qrs_detector, qrs_compare, detection_combiner
 from tools.wfdbtools import rdann
 
 from matplotlib import pyplot as plt
@@ -38,13 +38,23 @@ signals = np.array(signals)
 panThompikns = qrs_detector.QRSPanThompkinsDetector()
 compareQRS = qrs_compare.QRSCompare()
 
+channel1_rr_waves = []
+channel2_rr_waves = []
+
+# R reference reading from the file
+wfdb_r_waves = get_true_r_waves(record, start_sample, stop_sample)
+
 for i in [0, 1]:
     # R waves calculating
     # TODO Uwzględnianie obydwu odprowadzeń przy podawaniu wyniku
     r_waves = np.array(panThompikns.detect_qrs(signals[:,i]))
 
-    # R reference reading from the file
-    wfdb_r_waves = get_true_r_waves(record, start_sample, stop_sample)
+    if i == 0:
+        channel1_rr_waves = r_waves[:, 0]
+    else:
+        channel2_rr_waves = r_waves[:, 0]
+
+
 
     # Plotting
     plt.figure(1)
@@ -65,8 +75,20 @@ for i in [0, 1]:
     plt.ylabel("EKG")
     plt.plot(wfdb_r_waves, np.ones_like(wfdb_r_waves), "g*")
 
-    sensivity, specifity = compareQRS.compare_segmentation(reference=wfdb_r_waves, test=r_waves[:,0], tol_time=0.1)
+    sensivity, specifity = compareQRS.compare_segmentation(reference=wfdb_r_waves, test=r_waves[:,0], tol_time=0.05)
     print(sensivity, specifity)
+
+#Combine detection
+dc = detection_combiner.DetectionCombiner()
+combined_rr = dc.combine(channel1=channel1_rr_waves, channel2=channel2_rr_waves, tol_time=0.1)
+sensivity, specifity = compareQRS.compare_segmentation(reference=wfdb_r_waves, test=combined_rr, tol_time=0.05)
+print(sensivity, specifity)
+
+plt.figure(3)
+plt.title("Załamki - z obydwu kanałów")
+plt.plot(combined_rr, np.ones_like(combined_rr), "m*")
+plt.plot(signals[:,0])
+plt.plot(wfdb_r_waves, 40 +np.ones_like(wfdb_r_waves), "b*")
 
 plt.show()
 
