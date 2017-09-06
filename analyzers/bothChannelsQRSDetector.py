@@ -1,13 +1,11 @@
-from parsers import ecg_recording_data_parser
-from medical import qrs_detector, qrs_compare, detection_combiner
-from medical import get_atr
-
-from os import path
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
+from simple_medical_analysers import get_atr
+from simple_medical_analysers import qrs_detector, qrs_compare, detection_combiner
+from parsers import ecg_recording_data_parser
 
 
-class BothChannelsQRSAnalyser(object):
+class BothChannelsQRSDetector(object):
 
     def __init__(self):
 
@@ -21,7 +19,7 @@ class BothChannelsQRSAnalyser(object):
         self._sampling_ratio = None
         self._tol_compare_time = None
 
-    def analyse(self, record, start_sample=0, stop_sample=10000, sampling_ratio=250, margin_r_waves_time=0.1):
+    def analyse(self, record, start_sample=0, stop_sample=10000, sampling_ratio=250, margin_r_waves_time=0.1, info=True, plotting=True):
 
         self._sampling_ratio = sampling_ratio
         self._tol_compare_time = margin_r_waves_time
@@ -41,60 +39,16 @@ class BothChannelsQRSAnalyser(object):
                                            tol_compare_time=self._tol_compare_time)
         self._combined_rr = dc.combine(channel1=self._channel1_r_waves, channel2=self._channel2_r_waves,
                                        sampling_ratio=self._sampling_ratio, tol_compare_time=self._tol_compare_time)
+        if info == True:
+            self.print_combining_results()
 
-        self.print_combining_results()
+        if plotting == True:
+            self.plot_my_plot(1, self._signals[:, 0], self._channel1_r_waves, "Sygnał z kanału 0")
+            self.plot_my_plot(2, self._signals[:, 1], self._channel2_r_waves, "Sygnał z kanału 1")
+            plt.show()
 
-        ########## PLOTTING ###################
-        self.plot_my_plot(1, self._signals[:, 0], self._channel1_r_waves, "Sygnał z kanału 0")
-        self.plot_my_plot(2, self._signals[:, 1], self._channel2_r_waves, "Sygnał z kanału 1")
-        plt.show()
+        return self._combined_rr
 
-        #######################################
-
-        self.rr_intervals_analyse(self._reference, self._signals[:, 0])
-
-    def rr_intervals_analyse(self, r_waves, channel, time_margin=0.2):
-
-        samples_margin = time_margin * self._sampling_ratio
-        # print(channel)
-        # print(r_waves)
-
-        rr_distanses = []
-
-        # TODO should return channel RRintervals
-        prev_r_wave_index = -1
-        current_rr_interval = None
-
-        for r_wave_index in r_waves:
-            if prev_r_wave_index > 0:
-                current_rr_interval = channel[int(prev_r_wave_index - samples_margin):int(r_wave_index + samples_margin)]
-                rr_distanses.append(int(r_wave_index - prev_r_wave_index))
-
-                # TODO How to say which interval is with atrial fibrillation?
-                # TODO Potrzebna referncyjna baza zdrowych ludzi...?
-
-                # plt.figure(1)
-                # plt.plot(current_rr_interval)
-                #plt.show()
-
-                prev_r_wave_index = r_wave_index
-            else:
-                prev_r_wave_index = r_wave_index
-                continue
-
-        # print(rr_distanses)
-        self.plot_histogram(rr_distanses, "Histogram odstępów RR")
-
-
-
-        # TODO Analiza odstępów RR
-        # TODO Potrzebna miara opisująca rozkład histogramów
-
-    def plot_histogram(self, signal, title):
-        # TODO histogram (dedicated for rr_intervals)
-        plt.hist(signal)
-        plt.title(title)
-        plt.show()
 
     def print_combining_results(self):
 
@@ -121,9 +75,3 @@ class BothChannelsQRSAnalyser(object):
         plt.plot(self._reference, 40 + np.ones_like(self._reference), "b*", label="Referencyjne załamki")
         plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
                            ncol=2, mode="expand", borderaxespad=0.)
-
-
-record = path.join("downloads", "04015")
-
-analyzer = BothChannelsQRSAnalyser()
-analyzer.analyse(record, start_sample=0, stop_sample=10000)
