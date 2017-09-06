@@ -6,9 +6,24 @@ class DetectionCombiner():
     def __init__(self):
         pass
 
-    def combine(self, channel1=[], channel2=[], sampling_ratio=250, tol_time=0.05):
 
-        tol_samples = tol_time * sampling_ratio
+    def verify(self, channelX=[], sampling_ratio=250, tol_compare_time=0.05):
+
+        newChannelX = []
+        tol_samples = tol_compare_time * sampling_ratio
+        old_element = -1 - tol_samples
+
+        for element in channelX:
+            if element >= (old_element + tol_samples):
+                newChannelX = np.append(newChannelX, element)
+
+            old_element = element
+
+        return newChannelX
+
+    def combine(self, channel1=[], channel2=[], sampling_ratio=250, tol_compare_time=0.05):
+
+        tol_samples = tol_compare_time * sampling_ratio
 
         new_qrs = channel1
 
