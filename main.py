@@ -1,5 +1,5 @@
 from os import path
-from analyzers import bothChannelsQRSDetector, rrIntervalsAnalyser
+from analyzers import bothChannelsQRSDetector, rrIntervalsAnalyser, dimensionAnalyzer
 from simple_medical_analysers import wavelet_analysis
 import pywt
 import numpy as np
@@ -12,7 +12,8 @@ analyzerQRS = bothChannelsQRSDetector.BothChannelsQRSDetector()
 combined_rr = analyzerQRS.analyse(record, start_sample=0, stop_sample=10000, info=False, plotting=False)
 
 analyzerRR = rrIntervalsAnalyser.rrIntervalsAnalyser(analyzerQRS)
-list_of_intervals, rr_distances = analyzerRR.get_intervals(combined_rr, channel_no=1, time_margin=0.1)
+list_of_intervals_chann0, rr_distances_chann0 = analyzerRR.get_intervals(combined_rr, channel_no=0, time_margin=0.1)
+list_of_intervals_chann1, rr_distances_chann1 = analyzerRR.get_intervals(combined_rr, channel_no=1, time_margin=0.1)
 
 # TODO Analiza odstępów RR
 # (potrzebna miara opisująca rozkład histogramów?)
@@ -21,70 +22,53 @@ list_of_intervals, rr_distances = analyzerRR.get_intervals(combined_rr, channel_
 # TODO Analiza kształu (falki)
 # (korzystająca z podzielonych fragmentów z RR?)
 
-for interval in list_of_intervals:
+pca = dimensionAnalyzer.PCADimensionAnalyser()
+ica = dimensionAnalyzer.ICADimensionAnalyzer()
 
-    #interval_signal = [0.0, 2.0, 5.0, 6.0, 7.0, 9.0] # TESTOWY
-    interval_signal = interval.get_signal()
+for index, interval_chann0 in enumerate(list_of_intervals_chann0):
 
-    # Podejście 1
-    #list_of_coeffs = pywt.wavedec(interval_signal, 'db6', level=4)
-    # #signal_reconstructed = pywt.waverec(list_of_coeffs, 'db1')
-    #
-    # coeff_energies = []
-    #
-    # print(list_of_coeffs)
-    #
-    # for coeff in list_of_coeffs:
-    #     coeff_energies.append(wavelet_analysis.calculate_wavelet_coeff_energy(coeff))
-    #
-    # print(coeff_energies)
+    interval_signal_chann0 = interval_chann0.get_signal()
+    interval_signal_chann1 = list_of_intervals_chann1[index].get_signal()
 
+    signal_chann_0_filtered = wavelet_analysis.filter_signal(interval_signal_chann0, wavelet="db6")
+    signal_chann_1_filtered = wavelet_analysis.filter_signal(interval_signal_chann1, wavelet="db6")
 
-    #Podejście 2
-    #
-    # for index, coeff in enumerate(list_of_coeffs):
-    #     # if index >= len(list_of_coeffs) - 2:
-    #     #     coeff = np.zeros(len(coeff))
-    #     #     list_of_coeffs[index] = coeff
-    #     if index != 0:
-    #         coeff = np.zeros(len(coeff))
-    #         list_of_coeffs[index] = coeff
-    # signal_reconstructed = pywt.waverec(list_of_coeffs, 'db6')
+    # PCA & ICA
+    dataset = np.vstack((signal_chann_0_filtered, signal_chann_1_filtered)).T
+    pca.calculate_new_dimension(dataset, pca_components=2)
+    new_pca_dimension_dataset = pca.get_new_dimension(dataset).T
 
-    # Zerowanie nieuzywanych pasm (filtracja)
+    ica.calculate_new_dimension(dataset, ica_components=2)
+    new_ica_dimension_dataset = pca.get_new_dimension(dataset).T
 
-    # Podejście 2
-
-    wavelet = "db6"
-    (cA, cD) = pywt.dwt(interval_signal, wavelet)
-    (cA2, cD2) = pywt.dwt(cA, wavelet)
-    (cA3, cD3) = pywt.dwt(cA2, wavelet)
-    (cA4, cD4) = pywt.dwt(cA3, wavelet)
-    (cA5, cD5) = pywt.dwt(cA4, wavelet)
-    (cA6, cD6) = pywt.dwt(cA5, wavelet)
-    (cA7, cD7) = pywt.dwt(cA6, wavelet)
-
-    cA7 = np.zeros(len(cA7))
-    cD = np.zeros(len(cD))
-    cD2 = np.zeros(len(cD2))
-
-    list_of_coeffs = [cA7, cD7, cD6, cD5, cD4, cD3, cD2, cD]
-    signal_reconstructed = pywt.waverec(list_of_coeffs, wavelet)
-
+    # plotting
     plt.figure(1)
-    plt.subplot(1,2,1)
-    plt.plot(interval_signal)
-    plt.ylabel("EKG przed rekonstukcją")
-    plt.subplot(1,2,2)
-    plt.plot(signal_reconstructed)
-    plt.ylabel("EKG po rekonstrukcji")
-    plt.show()
+    plt.subplot(3, 2, 1)
+    plt.plot(interval_signal_chann0)
+    plt.plot(interval_signal_chann1)
+    plt.ylabel("EKG przed przetwarzaniem")
 
-    # Podejście 2
-    # (cA, cD) = pywt.dwt(interval_signal, 'db1')
-    # (cA2, cD2) = pywt.dwt(cA, 'db1')
-    # (cA3, cD3) = pywt.dwt(cA2, 'db1')
-    # Na wejście sieci neuronowej będę podawać unormowaną energię dla danego współczynnika dekompozycji ?????
+    plt.subplot(3, 2, 2)
+    plt.plot(signal_chann_0_filtered)
+    plt.plot(signal_chann_1_filtered)
+    plt.ylabel("EKG po fltracji falkowej")
+
+    plt.subplot(3, 2, 3)
+    plt.plot(new_pca_dimension_dataset[0,:])
+    plt.ylabel("Sygnał 1 po PCA")
+
+    plt.subplot(3, 2, 4)
+    plt.plot(new_pca_dimension_dataset[1, :])
+    plt.ylabel("Sygnał 2 po PCA")
+
+    plt.subplot(3, 2, 5)
+    plt.plot(new_ica_dimension_dataset[0, :])
+    plt.ylabel("Sygnał 2 po ICA")
+
+    plt.subplot(3, 2, 6)
+    plt.plot(new_ica_dimension_dataset[1, :])
+    plt.ylabel("Sygnał 2 po ICA")
+    plt.show()
 
 #############################################################################################################3
 # TODO Baza REFERENCYJNA danych
