@@ -2,6 +2,7 @@ from os import path
 from analyzers import bothChannelsQRSDetector, rrIntervalsAnalyser
 from simple_medical_analysers import wavelet_analysis
 import pywt
+import numpy as np
 from matplotlib import pyplot as plt
 
 
@@ -26,21 +27,57 @@ for interval in list_of_intervals:
     interval_signal = interval.get_signal()
 
     # Podejście 1
-    list_of_coeffs = pywt.wavedec(interval_signal, 'db1', level=7)
-    signal_reconstructed = pywt.waverec(list_of_coeffs, 'db1')
+    #list_of_coeffs = pywt.wavedec(interval_signal, 'db6', level=4)
+    # #signal_reconstructed = pywt.waverec(list_of_coeffs, 'db1')
+    #
+    # coeff_energies = []
+    #
+    # print(list_of_coeffs)
+    #
+    # for coeff in list_of_coeffs:
+    #     coeff_energies.append(wavelet_analysis.calculate_wavelet_coeff_energy(coeff))
+    #
+    # print(coeff_energies)
 
-    coeff_energies = []
 
-    for coeff in list_of_coeffs:
-        coeff_energies.append(wavelet_analysis.calculate_wavelet_coeff_energy(coeff))
+    #Podejście 2
+    #
+    # for index, coeff in enumerate(list_of_coeffs):
+    #     # if index >= len(list_of_coeffs) - 2:
+    #     #     coeff = np.zeros(len(coeff))
+    #     #     list_of_coeffs[index] = coeff
+    #     if index != 0:
+    #         coeff = np.zeros(len(coeff))
+    #         list_of_coeffs[index] = coeff
+    # signal_reconstructed = pywt.waverec(list_of_coeffs, 'db6')
 
-    print(coeff_energies)
+    # Zerowanie nieuzywanych pasm (filtracja)
+
+    # Podejście 2
+
+    wavelet = "db6"
+    (cA, cD) = pywt.dwt(interval_signal, wavelet)
+    (cA2, cD2) = pywt.dwt(cA, wavelet)
+    (cA3, cD3) = pywt.dwt(cA2, wavelet)
+    (cA4, cD4) = pywt.dwt(cA3, wavelet)
+    (cA5, cD5) = pywt.dwt(cA4, wavelet)
+    (cA6, cD6) = pywt.dwt(cA5, wavelet)
+    (cA7, cD7) = pywt.dwt(cA6, wavelet)
+
+    cA7 = np.zeros(len(cA7))
+    cD = np.zeros(len(cD))
+    cD2 = np.zeros(len(cD2))
+
+    list_of_coeffs = [cA7, cD7, cD6, cD5, cD4, cD3, cD2, cD]
+    signal_reconstructed = pywt.waverec(list_of_coeffs, wavelet)
 
     plt.figure(1)
     plt.subplot(1,2,1)
     plt.plot(interval_signal)
+    plt.ylabel("EKG przed rekonstukcją")
     plt.subplot(1,2,2)
     plt.plot(signal_reconstructed)
+    plt.ylabel("EKG po rekonstrukcji")
     plt.show()
 
     # Podejście 2
