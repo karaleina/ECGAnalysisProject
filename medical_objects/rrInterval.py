@@ -8,10 +8,15 @@ class RRInterval(object):
     def get_signal(self):
         return self.__interval
 
+    def set_signal(self, interval):
+        self.__interval = interval
+
     def plot_interval(self):
         plt.figure(1)
         plt.plot(self.__interval)
         plt.show()
+
+
 
 
 

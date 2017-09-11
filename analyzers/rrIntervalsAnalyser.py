@@ -30,6 +30,30 @@ class rrIntervalsAnalyser(object):
 
         return list_of_intervals, rr_distanses
 
+    def get_list_of_intervals_isoelectric_line(self, list_of_intervals, margin_to_discard = 0.20):
+
+        # We don't want to modify existing list
+        new_list_of_intervals = []
+
+        for interval_index, interval in enumerate(list_of_intervals):
+
+            interval_signal = interval.get_signal()
+            length_of_interval = len(interval_signal)
+
+            start = int(round((margin_to_discard / 2 * length_of_interval), 0))
+            stop = int(round(((1 - margin_to_discard / 2) * length_of_interval), 0))
+
+            new_interval_signal = interval_signal[start:stop]
+
+            new_interval = rrInterval.RRInterval()
+            new_interval.set_signal(new_interval_signal)
+
+            new_list_of_intervals.append(new_interval)
+
+        return new_list_of_intervals
+
+
+
     def plot_histogram(self, signal, title):
 
         raw_signal = signal
