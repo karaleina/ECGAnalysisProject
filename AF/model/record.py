@@ -10,10 +10,13 @@ sys.path.append('home/karolina/PycharmProjects/atrialFibrillationAnalysisProject
 
 class Record():
 
-    def __init__(self, path):
+    def __init__(self, path, database="MIT-AF", frequency="250"):
+
         self._path = path
+        self._database = database
+        self._frequency = frequency
+
         self._signals = None
-        self._frequency = None
 
     def get_path(self):
         return self._path

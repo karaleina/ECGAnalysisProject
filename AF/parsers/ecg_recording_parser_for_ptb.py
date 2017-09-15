@@ -40,29 +40,11 @@ class ECGRecordingPTBDataParser(object):
                     else:
                         value = value_high*256 + value_low
 
-                    # value = struct.unpack(">h", sample)  # hardware returns big-endian
                     samples.append(value)
 
                 index_of_the_sample += 1
 
-        # for i in range(0, to_sample - from_sample + 1):
-        #     sample = f.read(2)
-        #     if not sample:
-        #         break
-        #
-        #     if index_of_the_sample % modulo == channel_no:
-        #         value = struct.unpack(">h", sample)  # hardware returns big-endian
-        #         samples.append(value)
-        #
-        #     index_of_the_sample += 1
-
         return samples
-    #
-    # def _sample_range_to_byte_range(self, from_sample, to_sample):
-    #     unrounded_from_byte = int(from_sample)
-    #     from_byte = unrounded_from_byte - (unrounded_from_byte % 3)
-    #     unrounded_to_byte = int(to_sample)
-    #     to_byte = unrounded_to_byte + (3 - unrounded_to_byte % 3)
-    #     return from_byte, to_byte
+
 
 
