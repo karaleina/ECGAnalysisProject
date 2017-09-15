@@ -4,24 +4,29 @@ from AF.simple_medical_analysers import wavelet_analysis
 from AF.model import record
 from matplotlib import pyplot as plt
 import numpy as np
+from scipy import signal
 
-# Creating records
+# RECORDS
 record_atrial_fibrillation = record.Record(path.join("downloads", "af", "04126"), database="af")
-record_atrial_fibrillation.set_frequency(250)
-
 record_normal = record.Record(path.join("downloads", "ptb", "patient104", "s0306lre"), database="ptb")
-record_normal.set_frequency(1000)
 
+# PARAMS
+record_atrial_fibrillation.set_frequency(250)
+record_normal.set_frequency(1000)
 start = 0
 interval = 100
 
+# SIGNALS
 signals_af = record_atrial_fibrillation.get_signals(start, interval)
 signals_norm = record_normal.get_signals(start, interval)
 
+# RESAMPLING
+new_signals_norm = signal.resample(signals_norm, num=len(signals_af[:,0]))
+
+plt.plot(new_signals_norm)
+plt.show()
 
 # TODO RESAMPLING
-
-
 
 
 # signal_af = record_atrial_fibrillation.get_signal()
