@@ -1,8 +1,10 @@
 import numpy as np
+from AF.algorithms import r_wave_detection
 from matplotlib import pyplot as plt
-from simple_medical_analysers import get_atr
-from simple_medical_analysers import qrs_detector, qrs_compare, detection_combiner
-from parsers import ecg_recording_data_parser
+from AF.parsers import ecg_recording_data_parser
+from AF.simple_medical_analysers import qrs_compare, detection_combiner, wavelet_analysis
+
+from AF.simple_medical_analysers import get_atr
 
 
 class BothChannelsQRSDetector(object):
@@ -19,18 +21,33 @@ class BothChannelsQRSDetector(object):
         self._sampling_ratio = None
         self._tol_compare_time = None
 
-    def analyse(self, record, start_sample=0, stop_sample=10000, sampling_ratio=250, margin_r_waves_time=0.1, info=True, plotting=True):
+    def analyse(self, record, start_sample=0, stop_sample=1000, sampling_ratio=250, margin_r_waves_time=0.1, info=True, plotting=True, qrs_reading=True):
+
+        # len should always be % 2 == 0 for wavelet reasons
+        if stop_sample - start_sample % 2 != 0:
+            stop_sample += 1
 
         self._sampling_ratio = sampling_ratio
         self._tol_compare_time = margin_r_waves_time
 
         parser = ecg_recording_data_parser.ECGRecordingDataParser()
         self._signals = np.array(parser.parse(str(record) + ".dat", start_sample, stop_sample))
-        self._reference = np.array(get_atr.get_true_r_waves(record, start_sample, stop_sample))
 
-        panThompikns = qrs_detector.QRSPanThompkinsDetector()
-        self._channel1_r_waves = np.array(panThompikns.detect_qrs(self._signals[:,0]))[:,0]
-        self._channel2_r_waves = np.array(panThompikns.detect_qrs(self._signals[:,1]))[:,0]
+        # TODO Before Thompkins filtration
+        self._signals[:, 0] = wavelet_analysis.filter_signal(self._signals[:, 0].ravel())
+        self._signals[:, 1] = wavelet_analysis.filter_signal(self._signals[:, 1].ravel())
+
+        # TODO Other detection algorithms
+        # TODO Other kind of detection
+
+        #panThompikns = qrs_pan_thomkins_detector.QRSPanThompkinsDetector()
+        qrsDetector = r_wave_detection.Christov()
+        self._channel1_r_waves = np.array(qrsDetector.detect_r_waves(self._signals[:,0])).ravel()
+        self._channel2_r_waves = np.array(qrsDetector.detect_r_waves(self._signals[:,1])).ravel()
+
+        print("--"*100)
+        print(self._channel1_r_waves)
+        print(self._channel2_r_waves)
 
         dc = detection_combiner.DetectionCombiner()
         self._channel1_r_waves = dc.verify(self._channel1_r_waves, sampling_ratio=self._sampling_ratio,
@@ -39,7 +56,9 @@ class BothChannelsQRSDetector(object):
                                            tol_compare_time=self._tol_compare_time)
         self._combined_rr = dc.combine(channel1=self._channel1_r_waves, channel2=self._channel2_r_waves,
                                        sampling_ratio=self._sampling_ratio, tol_compare_time=self._tol_compare_time)
-        if info == True:
+
+        if qrs_reading == True and info == True:
+            self._reference = np.array(get_atr.get_true_r_waves(record, start_sample, stop_sample))
             self.print_combining_results()
 
         if plotting == True:

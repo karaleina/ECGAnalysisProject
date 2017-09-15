@@ -1,6 +1,8 @@
-from matplotlib import pyplot as plt
-from medical_objects import rrInterval
 import numpy as np
+from matplotlib import pyplot as plt
+
+from AF.medical_objects import rrInterval
+
 
 class rrIntervalsAnalyser(object):
 

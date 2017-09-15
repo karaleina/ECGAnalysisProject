@@ -1,6 +1,7 @@
 import numpy as np
 from biosppy import ecg
-from simple_medical_analysers.qrs_detector import QRSPanThompkinsDetector
+
+from AF.algorithms.qrs_pan_thomkins_detector import QRSPanThompkinsDetector
 
 
 #Dziedziczenie???
