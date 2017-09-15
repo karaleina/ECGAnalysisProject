@@ -4,11 +4,11 @@ import numpy as np
 from AF.algorithms import r_wave_detection
 from matplotlib import pyplot as plt
 
-from AF.parsers import ecg_recording_data_parser
+from AF.parsers import ecg_recording_parser_af
 
 record_normal = path.join("downloads", "nsrdb", "16420")
 
-parser = ecg_recording_data_parser.ECGRecordingDataParser()
+parser = ecg_recording_parser_af.ECGRecordingDataParser()
 signals = np.array(parser.parse(str(record_normal) + ".dat", 0, 1000))
 
 signals[:, 0] = signals[:, 0].ravel()

@@ -39,7 +39,7 @@ class rrIntervalsAnalyser(object):
 
         for interval_index, interval in enumerate(list_of_intervals):
 
-            interval_signal = interval.get_signal()
+            interval_signal = interval.get_signals()
             length_of_interval = len(interval_signal)
 
             start = int(round((margin_to_discard / 2 * length_of_interval), 0))

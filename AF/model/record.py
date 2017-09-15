@@ -1,46 +1,46 @@
-from AF.model import wfdbtools
-from AF.parsers import  ecg_recording_data_parser
-from scipy import signal
-import path
+from AF.parsers import  ecg_recording_parser_af, ecg_recording_parser_ptb
+
 import numpy as np
-import sys
-
-
-sys.path.append('home/karolina/PycharmProjects/atrialFibrillationAnalysisProject')
 
 class Record():
 
-    def __init__(self, path, database="MIT-AF", frequency="250"):
+    def __init__(self, path, database=None):
 
         self._path = path
         self._database = database
-        self._frequency = frequency
-
+        self._frequency = None
         self._signals = None
+
+        if self._database == "af":
+            self._frequency = 250 # Hz
+        elif self._database == "ptb":
+            self._frequency = 1000 # Hz
+        else:
+            print("Nieznana częstotliwość próbkowania!")
 
     def get_path(self):
         return self._path
 
-    def get_signal(self, start=0, interval=10, length_of_other_signal=1000):
+    def get_signals(self, start=0, interval=10):
+        """Returns 2D array :
+        1) dimension: channel_idxes
+        2) dimension: sample_idxes"""
 
-        end = int(start + interval*1/self.get_frequency())
-        parser = ecg_recording_data_parser.ECGRecordingDataParser()
-        signals = np.array(parser.parse(str(self._path) + ".dat", start, end))
+        end = int(start + interval*self.get_frequency())
+        self._signals = np.zeros((end - start + 1, 2))
 
-        #wfdbtools.rdsamp(record=self._path, start=start, interval=interval)
+        if self._database == "ptb":
+            parser = ecg_recording_parser_ptb.ECGRecordingPTBDataParser()
+            for signal_index in [6, 7]:
+                self._signals[:, signal_index-6] = parser.parse(self._path + ".dat", channel_no=signal_index,
+                                            modulo=12, from_sample=start, to_sample=12*(end+1), invert=False)
+        elif self._database == "af":
+            parser = ecg_recording_parser_af.ECGRecordingDataParser()
+            self._signals[:,:] = parser.parse(self._path + ".dat", from_sample=start, to_sample=end)
+        else:
+            print("Brak zdefiniowanego rodzaju danych do parsowania")
 
-        print(signals)
-        if self._frequency != 250:
-
-
-            resampled1 = signal.resample(signals[:,0], num=length_of_other_signal)
-            resampled2 = signal.resample(signals[:,1], num=length_of_other_signal)
-            result = np.zeros((len(resampled1), 2))
-            result[:,0] = resampled1
-            result[:,1] = resampled2
-            return result
-
-        return signals
+        return (self._signals)
 
     def get_frequency(self):
         return self._frequency

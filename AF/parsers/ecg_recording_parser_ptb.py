@@ -9,10 +9,10 @@ class ECGRecordingPTBDataParser(object):
     def __init__(self):
         pass
 
-    def parse(self, dat_file_name, channel_no, modulo, from_sample, to_sample):
-        return self._read_samples(dat_file_name, channel_no, modulo, from_sample, to_sample)
+    def parse(self, dat_file_name, channel_no, modulo, from_sample, to_sample, invert=False):
+        return self._read_samples(dat_file_name, channel_no, modulo, from_sample, to_sample, invert=False)
 
-    def _read_samples(self, dat_file_name, channel_no, modulo, from_sample, to_sample):
+    def _read_samples(self, dat_file_name, channel_no, modulo, from_sample, to_sample, invert=False):
         from_byte, to_byte = from_sample, to_sample
         samples = []
         with open(dat_file_name, "rb") as f:
@@ -39,6 +39,9 @@ class ECGRecordingPTBDataParser(object):
                         value = -(value_high*256 + value_low + 1 )
                     else:
                         value = value_high*256 + value_low
+
+                    if invert == True:
+                        value = -value
 
                     samples.append(value)
 
