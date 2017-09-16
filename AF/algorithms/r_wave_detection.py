@@ -41,9 +41,11 @@ class Thompkins(object):
 
         detector = QRSPanThompkinsDetector()
         a = detector.detect_qrs(channel)
-        b = a[0]
+        b = a
+
         r_waves_thompkins_chann = []
-        for element in b: r_waves_thompkins_chann.append(element[0])
+        for element in b:
+            r_waves_thompkins_chann.append(element[0])
         return r_waves_thompkins_chann
 
 class Engzee(object):

@@ -21,7 +21,7 @@ class ECGRecordingDataParser(object):
                 first_value = self._complement_of_two_12_bit(sample_bytes[0] | ((sample_bytes[1] & 0x0f) << 8))
                 second_value = self._complement_of_two_12_bit(sample_bytes[2] | ((sample_bytes[1] & 0xf0) << 4))
 
-                samples.append([first_value, second_value])
+                samples.append([second_value, first_value])
         return samples
 
     def _sample_range_to_byte_range(self, from_sample, to_sample):

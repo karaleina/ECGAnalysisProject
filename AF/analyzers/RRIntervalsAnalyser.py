@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from AF.medical_objects import rrInterval
 
 
-class rrIntervalsAnalyser(object):
+class RRIntervalsAnalyser(object):
 
     def __init__(self, bothChannelsQRSDetector):
 
