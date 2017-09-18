@@ -32,25 +32,47 @@ class RRIntervalsAnalyser(object):
 
         return list_of_intervals, rr_distanses
 
-    def get_list_of_intervals_isoelectric_line(self, list_of_intervals, margin_to_discard = 0.20):
+    # def get_list_of_intervals_isoelectric_line(self, list_of_intervals, margin_to_discard = 0.20):
+    #
+    #     # We don't want to modify existing list
+    #     new_list_of_intervals = []
+    #
+    #     for interval_index, interval in enumerate(list_of_intervals):
+    #
+    #         interval_signal = interval.get_signal()
+    #         length_of_interval = len(interval_signal)
+    #
+    #         start = int(round((margin_to_discard / 2 * length_of_interval), 0))
+    #         stop = int(round(((1 - margin_to_discard / 2) * length_of_interval), 0))
+    #
+    #         new_interval_signal = interval_signal[start:stop]
+    #
+    #         new_interval = rrInterval.RRInterval()
+    #         new_interval.set_signal(new_interval_signal)
+    #
+    #         new_list_of_intervals.append(new_interval)
+    #
+    #     return new_list_of_intervals
+
+    def get_list_of_intervals_isoelectric_line(self, list_of_intervals, interval_samples=100):
 
         # We don't want to modify existing list
         new_list_of_intervals = []
 
         for interval_index, interval in enumerate(list_of_intervals):
+            interval_signal = interval.get_signal()
 
-            interval_signal = interval.get_signals()
-            length_of_interval = len(interval_signal)
-
-            start = int(round((margin_to_discard / 2 * length_of_interval), 0))
-            stop = int(round(((1 - margin_to_discard / 2) * length_of_interval), 0))
-
-            new_interval_signal = interval_signal[start:stop]
-
-            new_interval = rrInterval.RRInterval()
-            new_interval.set_signal(new_interval_signal)
-
-            new_list_of_intervals.append(new_interval)
+            if len(interval_signal)< interval_samples:
+                new_interval = None
+                #new_list_of_intervals.append(new_interval)
+            else:
+                center_of_interval = len(interval_signal)/2
+                start = center_of_interval - int(1/2 * interval_samples)
+                stop = center_of_interval + int(1/2 * interval_samples) + 1
+                new_interval_signal = interval_signal[int(start):int(stop)]
+                new_interval = rrInterval.RRInterval()
+                new_interval.set_signal(new_interval_signal)
+                new_list_of_intervals.append(new_interval)
 
         return new_list_of_intervals
 

@@ -39,7 +39,6 @@ class Record():
                 signal_indexes = [6, 7]
 
             for signal_index in signal_indexes:
-                print(signal_index)
                 self._signals[:, index] = parser.parse(self._path + ".dat", channel_no=signal_index,
                                             modulo=12, from_sample=start, to_sample=12*(end+1)-1, invert=False)
                 index +=1

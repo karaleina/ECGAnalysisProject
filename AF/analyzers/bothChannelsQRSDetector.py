@@ -24,7 +24,7 @@ class BothChannelsQRSDetector(object):
         self._sampling_ratio = None
         self._tol_compare_time = None
 
-    def compare(self, signals, sampling_ratio=250, margin_r_waves_time=0.1, start_sample=0, stop_sample=100000000,
+    def compare(self, signals, sampling_ratio=250, margin_r_waves_time=0.1, start_sample=0, stop_sample=1000000000000,
                 record_file=None, info=True, plotting=True, qrs_reading=True):
 
         """Signals are 2D numpy array where:
@@ -40,7 +40,7 @@ class BothChannelsQRSDetector(object):
         self._start_sample = start_sample
         self._stop_sample = stop_sample
 
-        detector = r_wave_detection.QRSPanThompkinsDetector()
+        detector = r_wave_detection.Hamilton()#QRSPanThompkinsDetector()
         dc = detection_combiner.DetectionCombiner()
 
         if qrs_reading == True:
@@ -49,7 +49,7 @@ class BothChannelsQRSDetector(object):
         old_channel_r_waves = []
 
         for signal_index in range(self._number_of_signals):
-            r_waves = np.array(detector.detect_qrs(self._signals[:, signal_index])).ravel()
+            r_waves = np.array(detector.detect_r_waves(self._signals[:, signal_index])).ravel()
             new_channel_r_waves = dc.verify(r_waves, sampling_ratio=self._sampling_ratio,
                                          tol_compare_time=self._tol_compare_time)
             self._combined_rr = dc.combine(old_channel_r_waves, new_channel_r_waves)
