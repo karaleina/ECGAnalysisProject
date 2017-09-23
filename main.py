@@ -9,17 +9,17 @@ from scipy import signal
 # RECORDS
 
 
-for index_str, str in enumerate(["04048"]):#["04015", "04043", "04048", "04126", "04746", "04908", "04936", "05091", "05121", "08455"]):
+for index_str, str_element in enumerate(["04048"]):#["04015", "04043", "04048", "04126", "04746", "04908", "04936", "05091", "05121", "08455"]):
 
-    path_af = path.join("downloads", "af", str)
+    path_af = path.join("downloads", "af", str_element)
     record_atrial_fibrillation = record.Record(path_af, database="af")
     record_normal = record.Record(path.join("downloads", "ptb", "patient116", "s0302lre"), database="ptb")
 
     # PARAMS
     record_atrial_fibrillation.set_frequency(250)
     record_normal.set_frequency(1000)
-    start = 1417000 # 1417000
-    interval = 164 #164
+    start = 1094000# 1417000
+    interval = 20 #164
 
     # SIGNALS
     signals_af = record_atrial_fibrillation.get_signals(start, interval)
@@ -59,7 +59,16 @@ for index_str, str in enumerate(["04048"]):#["04015", "04043", "04048", "04126",
         coeffs0, AF_signal_0, old_signal = wavelet_analysis.get_AF_coeffs_and_AF_signal(signal_isoelectric_0_filtered, wavelet="dmey")
         coeffs1, AF_signal_1, old_signal = wavelet_analysis.get_AF_coeffs_and_AF_signal(signal_isoelectric_1_filtered, wavelet="dmey") #  [cd_3_5_Hz_0, cd_7_5_Hz_0, cd_12_Hz_0, AF_signal_0]
 
-        #print("Coeffs energies: " + str(wavelet_analysis.get_all_normed_coeffs_energies(old_signal, [coeffs0, coeffs1])))
+        print("Coeffs energies dmey: " + str(wavelet_analysis.get_all_normed_coeffs_energies(old_signal, [coeffs0, coeffs1])))
+
+        # Wavelet Mayer
+        coeffs0, AF_signal_0, old_signal = wavelet_analysis.get_AF_coeffs_and_AF_signal(signal_isoelectric_0_filtered,
+                                                                                        wavelet="db2")
+        coeffs1, AF_signal_1, old_signal = wavelet_analysis.get_AF_coeffs_and_AF_signal(signal_isoelectric_1_filtered,
+                                                                                        wavelet="db2")  # [cd_3_5_Hz_0, cd_7_5_Hz_0, cd_12_Hz_0, AF_signal_0]
+
+        print(
+            "Coeffs energies db2: " + str(wavelet_analysis.get_all_normed_coeffs_energies(old_signal, [coeffs0, coeffs1])))
 
         # PCA & ICA
         dataset = np.vstack((signal_isoelectric_0_filtered, signal_isoelectric_1_filtered)).T

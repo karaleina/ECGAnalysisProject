@@ -1,4 +1,4 @@
-from AF.model.wfdbtools import rdann
+from AF.tools.wfdbtools import rdann
 
 def get_true_r_waves(path_string, start_sample, stop_sample):
 

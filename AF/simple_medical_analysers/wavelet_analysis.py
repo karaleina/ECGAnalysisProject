@@ -26,22 +26,31 @@ def get_all_normed_coeffs_energies(old_signal, coeffs_list):
     return list_of_coeff_energy
 
 
-def filter_signal(signal, wavelet="db6"):
+def filter_signal(signal, wavelet="db6", highcut=False):
 
-    (cA, cD) = pywt.dwt(signal, wavelet)
-    (cA2, cD2) = pywt.dwt(cA, wavelet)
-    (cA3, cD3) = pywt.dwt(cA2, wavelet)
-    (cA4, cD4) = pywt.dwt(cA3, wavelet)
-    (cA5, cD5) = pywt.dwt(cA4, wavelet)
-    (cA6, cD6) = pywt.dwt(cA5, wavelet)
-    (cA7, cD7) = pywt.dwt(cA6, wavelet)
+    try:
+        (cA, cD) = pywt.dwt(signal, wavelet)
+        (cA2, cD2) = pywt.dwt(cA, wavelet)
+        (cA3, cD3) = pywt.dwt(cA2, wavelet)
+        (cA4, cD4) = pywt.dwt(cA3, wavelet)
+        (cA5, cD5) = pywt.dwt(cA4, wavelet)
+        (cA6, cD6) = pywt.dwt(cA5, wavelet)
+        (cA7, cD7) = pywt.dwt(cA6, wavelet)
 
-    cA7 = np.zeros(len(cA7))
-    # cD = np.zeros(len(cD))
-    # cD2 = np.zeros(len(cD2))
+        cA7 = np.zeros(len(cA7))
+        # cD = np.zeros(len(cD))
+        # cD2 = np.zeros(len(cD2))
 
-    list_of_coeffs = [cA7, cD7, cD6, cD5, cD4, cD3, cD2, cD]
-    return pywt.waverec(list_of_coeffs, wavelet)
+        if highcut==True:
+            cD = np.zeros(len(cA))
+            cD2 = np.zeros(len(cD2))
+            #cD3 = np.zeros(len(cD3))
+
+        list_of_coeffs = [cA7, cD7, cD6, cD5, cD4, cD3, cD2, cD]
+        return pywt.waverec(list_of_coeffs, wavelet)
+
+    except ValueError:
+        print("Wavelet transform except even number of samples only.")
 
 
 def get_AF_coeffs_and_AF_signal(signal, wavelet="dmey"):
