@@ -8,7 +8,7 @@ from AF.analyzers import bothChannelsQRSDetector, RRIntervalsAnalyser
 from AF.simple_medical_analysers import wavelet_analysis
 
 
-pkl_file = open('database/af_data/04746.pkl', 'rb')
+pkl_file = open('database/norm_data/patient104_s0306lre.pkl', 'rb')
 data1 = pickle.load(pkl_file)
 pkl_file.close()
 
@@ -24,6 +24,15 @@ for i in range(len(data1["channel1"])):
         plt.plot(data1["channel1"][i].get_signal())
         plt.plot(data1["channel0"][i].get_signal())
         plt.pause(0.5)
+        plt.close("all")
+
+    if (i == 8 or i == 0):
+        plt.ion()
+        plt.figure(i).clear()
+        plt.plot(data1["channel1"][i].get_signal())
+        plt.plot(data1["channel0"][i].get_signal())
+        print(data1["channel1"][i].get_signal())
+        plt.pause(4)
         plt.close("all")
 
 
