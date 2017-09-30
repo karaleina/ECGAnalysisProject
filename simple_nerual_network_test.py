@@ -6,3 +6,5 @@ import numpy as np
 # Using KERAS
 # https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/
 
+# FROM SCRATCH
+# http://www.wildml.com/2015/09/implementing-a-neural-network-from-scratch/
