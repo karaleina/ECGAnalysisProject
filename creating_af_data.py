@@ -41,7 +41,7 @@ file_object = open(file_with_all_names, "r")
 
 afib_parsed_number = 0
 
-for file_no in "04048": #file_object:
+for file_no in ["04043"]: #file_object:
     # if file_no < "07162":
     #     continue
 
@@ -81,6 +81,7 @@ for file_no in "04048": #file_object:
         output = open('database/af_data/' + file_no + '.pkl', 'wb')
         pickle.dump(dataset_per_file_no, output, -1)
         output.close()
+        print("sparsowano dla ", output)
 
     except FileNotFoundError:
         print("Brak kompletu plików dla rekordu o nr: " + str(file_no))

@@ -6,6 +6,8 @@ import numpy as np
 from sklearn import datasets, linear_model
 from neural_model_functions.simple_neural_models import plot_decision_boundary, build_model, predict
 
+
+# Creating dataset
 np.random.seed(0)
 X, y = datasets.make_moons(200, noise=0.20)
 plt.scatter(X[:,0], X[:,1], s=40, c=y, cmap=plt.cm.Spectral)
@@ -20,7 +22,6 @@ plot_decision_boundary(lambda x: clf.predict(x), X, y)
 
 
 # Building a neural network
-
 hdim = 4
 model = build_model(nn_input_dim=2, nn_hdim=hdim, nn_output_dim=2,
                     X=X, y=y, num_examples=len(X),
