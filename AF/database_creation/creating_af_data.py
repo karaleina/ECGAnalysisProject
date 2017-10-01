@@ -41,7 +41,7 @@ file_object = open(file_with_all_names, "r")
 
 afib_parsed_number = 0
 
-for file_no in "04048": #file_object:
+for file_no in file_object:
     # if file_no < "07162":
     #     continue
 
@@ -59,13 +59,13 @@ for file_no in "04048": #file_object:
         for index, (s, name) in enumerate(zip(annsamp, names)):
             print("Rekord nr: ", file_no, ", próbka: ", s, ", annotacja: ", name)
             if name == "(AFIB":
-                start = s - 250
-                if s - 250 < 0 :
+                start = s - 1000
+                if s - 1000 < 0 :
                     start = s
                 parser = ecg_recording_parser_af.ECGRecordingDataParser()
 
                 signals_af = np.array(parser.parse(dat_file_name=file_path
-                                    + ".dat", from_sample=start, to_sample=s+250))
+                                    + ".dat", from_sample=start, to_sample=s+1000))
                 afib_parsed_number += 1
 
                 (list_of_intervals_chann0, list_of_intervals_chann1) = get_list_of_intervals(signals_af)
