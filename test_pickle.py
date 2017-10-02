@@ -7,7 +7,7 @@ from AF.parsers import ecg_recording_parser_af
 from AF.analyzers import bothChannelsQRSDetector, RRIntervalsAnalyser
 from AF.simple_medical_analysers import wavelet_analysis
 
-pkl_file_no = "04048"
+pkl_file_no = "05261"
 
 
 new_pickle_dir = 'database/af_corrected_data/'
@@ -29,7 +29,8 @@ print("len", len(dataset["channel1"]))
 
 def start_looping(index=0):
     for i in range(len(dataset["channel1"])):
-            if i >= 50:
+
+            if i >= index:
                 plt.ion()
                 plt.figure(i).clear()
                 plt.plot(dataset["channel1"][i].get_signal())
@@ -45,7 +46,7 @@ def start_looping(index=0):
                     del dataset["channel0"][i]
 
                     print("len", len(dataset["channel1"]))
-
+                    print("i", i)
                     start_looping(index=i)
 
                 if input_text == "save":
@@ -55,9 +56,9 @@ def start_looping(index=0):
                     pickle.dump(dataset, output, -1)
                     output.close()
 
-                plt.pause(0.1)
-                plt.cla()
-start_looping()
+                plt.pause(0.05)
+                plt.close("all")
+start_looping(90)
 
 output = open(filepath_new_pickle, 'wb')
 pickle.dump(dataset, output, -1)
