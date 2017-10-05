@@ -4,10 +4,9 @@ import pywt
 
 def calculate_wavelet_coeff_energy(coeff):
 
-    # for normalization 1
-    # number_of_elements_in_coeff = len(coeff)
+    # print(coeff)
 
-    return sum(np.power(coeff, 2)) #/ number_of_elements_in_coeff
+    return sum(np.power(coeff, 2))
 
 
 def get_all_normed_coeffs_energies(old_signal, coeffs_list):
@@ -74,6 +73,7 @@ def get_AF_coeffs_and_AF_signal(signal, wavelet="dmey"):
         list_of_new_coeffs.append(np.zeros(len(one_coeff)))
 
     reconstructed_signal = pywt.waverec(list_of_new_coeffs, wavelet)
-
-    return ([cD7, cD6, cA62], reconstructed_signal, old_signal) # do 3,5 Hz, do 7 Hz, do 11,5 Hz
+    coeff_list = [[cD7, cD6, cA62]]
+    normed_coeffs = get_all_normed_coeffs_energies(old_signal, coeff_list )
+    return (normed_coeffs, reconstructed_signal)
 
