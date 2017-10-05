@@ -157,7 +157,7 @@ def create_wavelet_dataset(dataset_with_diagnose, number_of_samples, wavelet):
 dataset_with_diagnose = create_all_dataset()
 
 # CREATING WAVELET DATASET
-wavelet_DATA = create_wavelet_dataset(dataset_with_diagnose, number_of_samples=90, wavelet="morl")
+wavelet_DATA = create_wavelet_dataset(dataset_with_diagnose, number_of_samples=90, wavelet="db2")
 
 # NEURAL NETWORK DATASET
 
