@@ -85,8 +85,6 @@ def create_wavelet_dataset(dataset_with_diagnose, wavelet, cropping=False, numbe
                     chann0 = chann0[int(center - number_of_samples / 2):int(center + number_of_samples / 2)]
                     chann1 = chann1[int(center - number_of_samples / 2):int(center + number_of_samples / 2)]
 
-
-
             # Filtration
             signal_chann_0_filtered = wavelet_analysis.filter_signal(chann0, wavelet="db6")
             signal_chann_1_filtered = wavelet_analysis.filter_signal(chann1, wavelet="db6")
@@ -131,6 +129,23 @@ def create_wavelet_dataset(dataset_with_diagnose, wavelet, cropping=False, numbe
 
     return X_dataset
 
+def create_test_and_train_dataset(wavelet_dataset):
+
+    test_dataset  = {"coeffs": [],
+                     "diagnose": []}
+    train_dataset = {"coeffs": [],
+                     "diagnose": []}
+
+    for index in range(len(wavelet_dataset["coeffs"])):
+        if index % 3 == 0:
+            test_dataset["coeffs"].append(wavelet_dataset["coeffs"][index])
+            test_dataset["diagnose"].append(wavelet_dataset["diagnose"][index])
+        else:
+            train_dataset["coeffs"].append(wavelet_dataset["coeffs"][index])
+            train_dataset["diagnose"].append(wavelet_dataset["diagnose"][index])
+
+    return train_dataset, test_dataset
+
 # Creating dataset
 file_with_all_names = path.join("downloads", "records_names_af")
 pickle_dir = path.join("database", "af_corrected3_data")
@@ -154,12 +169,19 @@ for i in range(len(all_af_dataset["channel0"])):
         all_dataset["channel1"].append(all_ptb_dataset["channel1"][i])
         all_dataset["diagnose"].append(0)
 
-wavelet_DATA = create_wavelet_dataset(dataset_with_diagnose=all_dataset, wavelet="db1", cropping=False, number_of_samples=100)
+wavelet_DATA = create_wavelet_dataset(dataset_with_diagnose=all_dataset, wavelet="sym2", cropping=False, number_of_samples=120)
+
+# CREATING TEST AND TRAIN DATASET:
+train_DATA, test_DATA = create_test_and_train_dataset(wavelet_DATA)
 
 # NEURAL NETWORK DATASET
 
-X = np.array(wavelet_DATA["coeffs"])
-y = np.array(wavelet_DATA["diagnose"])
+X_train = np.array(train_DATA["coeffs"])
+y_train = np.array(train_DATA["diagnose"])
+
+X_test = np.array(test_DATA["coeffs"])
+y_test = np.array(test_DATA["diagnose"])
+
 
 # Linear regression
 clf = linear_model.LogisticRegressionCV()
@@ -171,28 +193,29 @@ for i in range(2):
             break
         else:
 
-            X_for_regression = X[:, [j, i]]
+            X_for_regression = X_train[:, [j, i]]
             plt.figure(0).clear()
             plt.title(str(j) + ", " + str(i))
-            plt.scatter(X_for_regression[:, 0], X_for_regression[:, 1], s=40, c=y, cmap="cool")#plt.cm.Spectral)
+            plt.scatter(X_for_regression[:, 0], X_for_regression[:, 1], s=40, c=y_train, cmap="cool")#plt.cm.Spectral)
+            plt.colorbar()
             index += 1
 
             plt.show()
 
 
 # Building a neural network
-hdim = 9
+hdim = 5
 
-print(X)
+print(X_train)
 model = build_model(nn_input_dim=2, nn_hdim=hdim, nn_output_dim=2,
-                    X=X, y=y, num_examples=len(X),
+                    X=X_train, y=y_train, num_examples=len(X_train),
                     reg_lambda=0.001, epsilon=0.001,
                     num_passes=20000)
 
 print("Otrzymany model SNN: ", model)
 
-predictions = predict(model, X)
-difference = np.array(predictions)-np.array(y)
+predictions = predict(model, X_test)
+difference = np.array(predictions)-np.array(y_test)
 
 bad_classified = [i for i, x in enumerate(difference) if x != 0]
 
@@ -200,7 +223,7 @@ print(len(bad_classified))
 print(len(predictions))
 print(len(bad_classified)/len(predictions))
 
-plot_decision_boundary(lambda x: predict(model, x), X, y)
+plot_decision_boundary(lambda x: predict(model, x), X_test, y_test)
 plt.title("Decision Boundary for hidden layer size " + str(hdim))
 plt.show()
 
