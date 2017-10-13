@@ -6,6 +6,9 @@ import numpy as np
 from sklearn import datasets, linear_model
 from neural_model_functions.simple_neural_models import plot_decision_boundary, build_model, predict
 from matplotlib import pyplot as plt
+from PyEMD import EMD
+import numpy as np
+from matplotlib import pyplot as plt
 
 
 def create_af_dataset(file_with_all_names, pickle_dir):
@@ -100,17 +103,33 @@ def create_wavelet_dataset(dataset_with_diagnose, wavelet, cropping=False, numbe
                 a_pca.calculate_new_dimension(train_data_matrix=data_matrix, pca_components=2)
                 new_data_matrix = a_pca.get_new_dimension(test_data_matrix=data_matrix)
 
-                # plt.ion()
-                # plt.figure(1).clear()
-                # plt.subplot(2,2,1)
-                # plt.plot(signal_chann_0_filtered)
-                # plt.subplot(2,2,2)
-                # plt.plot(signal_chann_1_filtered)
-                # plt.subplot(2,2,3)
-                # plt.plot(new_data_matrix[:,0])
-                # plt.subplot(2,2,4)
+                plt.ion()
+                plt.figure(-1).clear()
+                plt.subplot(2,2,1)
+                plt.plot(signal_chann_0_filtered)
+                plt.title("Channel0")
+                plt.subplot(2,2,2)
+                plt.plot(signal_chann_1_filtered)
+                plt.title("Channel1")
+                plt.subplot(2,2,3)
+                plt.plot(new_data_matrix[:,0])
+                plt.title("PCA1")
+                plt.subplot(2,2,4)
+                plt.plot(new_data_matrix[:,1])
+                plt.title("PCA2")
+
+                # plt.figure(-2).clear()
+                # emd = EMD()
+                # IMFs = emd.emd(new_data_matrix[:,1])
                 # plt.plot(new_data_matrix[:,1])
-                # plt.pause(0.5)
+                #
+                # for index, imf in enumerate(IMFs):
+                #     plt.figure(index)
+                #     plt.plot(imf)
+                #     plt.title("IMF nr" + str(index) + "for channel0")
+                #
+                plt.pause(1)
+
 
                 signal_chann_0_filtered = new_data_matrix[:,0]
                 signal_chann_1_filtered = new_data_matrix[:,1]
