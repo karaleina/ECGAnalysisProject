@@ -1,6 +1,7 @@
 from os import path
 import pickle
 from AF.analyzers.dimensionAnalyzer import PCADimensionAnalyser
+from AF.analyzers.qualityEvaluation import calculate_quality_of_classification
 from AF.simple_medical_analysers import wavelet_analysis
 import numpy as np
 from sklearn import datasets, linear_model
@@ -103,20 +104,20 @@ def create_wavelet_dataset(dataset_with_diagnose, wavelet, cropping=False, numbe
                 a_pca.calculate_new_dimension(train_data_matrix=data_matrix, pca_components=2)
                 new_data_matrix = a_pca.get_new_dimension(test_data_matrix=data_matrix)
 
-                plt.ion()
-                plt.figure(-1).clear()
-                plt.subplot(2,2,1)
-                plt.plot(signal_chann_0_filtered)
-                plt.title("Channel0")
-                plt.subplot(2,2,2)
-                plt.plot(signal_chann_1_filtered)
-                plt.title("Channel1")
-                plt.subplot(2,2,3)
-                plt.plot(new_data_matrix[:,0])
-                plt.title("PCA1")
-                plt.subplot(2,2,4)
-                plt.plot(new_data_matrix[:,1])
-                plt.title("PCA2")
+                # plt.ion()
+                # plt.figure(-1).clear()
+                # plt.subplot(2,2,1)
+                # plt.plot(signal_chann_0_filtered)
+                # plt.title("Channel0")
+                # plt.subplot(2,2,2)
+                # plt.plot(signal_chann_1_filtered)
+                # plt.title("Channel1")
+                # plt.subplot(2,2,3)
+                # plt.plot(new_data_matrix[:,0])
+                # plt.title("PCA1")
+                # plt.subplot(2,2,4)
+                # plt.plot(new_data_matrix[:,1])
+                # plt.title("PCA2")
 
                 # plt.figure(-2).clear()
                 # emd = EMD()
@@ -128,8 +129,7 @@ def create_wavelet_dataset(dataset_with_diagnose, wavelet, cropping=False, numbe
                 #     plt.plot(imf)
                 #     plt.title("IMF nr" + str(index) + "for channel0")
                 #
-                plt.pause(1)
-
+                # plt.pause(1)
 
                 signal_chann_0_filtered = new_data_matrix[:,0]
                 signal_chann_1_filtered = new_data_matrix[:,1]
@@ -238,9 +238,11 @@ difference = np.array(predictions)-np.array(y_test)
 
 bad_classified = [i for i, x in enumerate(difference) if x != 0]
 
-print(len(bad_classified))
-print(len(predictions))
-print(len(bad_classified)/len(predictions))
+# print(len(bad_classified))
+# print(len(predictions))
+# print(len(bad_classified)/len(predictions))
+
+print(calculate_quality_of_classification(y_predictions=predictions, y_real=y_test))
 
 plot_decision_boundary(lambda x: predict(model, x), X_test, y_test)
 plt.title("Decision Boundary for hidden layer size " + str(hdim))

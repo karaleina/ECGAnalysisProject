@@ -7,11 +7,11 @@ from AF.parsers import ecg_recording_parser_af
 from AF.analyzers import bothChannelsQRSDetector, RRIntervalsAnalyser
 from AF.simple_medical_analysers import wavelet_analysis
 
-pkl_file_no = "08455"#"07910"
+pkl_file_no = "08378"#"07910"
 
 
-new_pickle_dir = 'database/af_corrected2_data/'
-filepath_old_pickle = path.join(new_pickle_dir, str(pkl_file_no) + '.pkl')
+new_pickle_dir = 'database/af_corrected4_data/'
+filepath_old_pickle = path.join(new_pickle_dir, 'new_' + str(pkl_file_no) + '.pkl')
 
 pkl_file = open(filepath_old_pickle, 'rb')#open('database/af_data/' + str(pkl_file_no) + '.pkl', 'rb')
 dataset = pickle.load(pkl_file)
@@ -71,7 +71,7 @@ def start_looping(index=0):
                 plt.pause(0.05)
 start_looping(0)
 
-filepath_new_pickle = path.join(new_pickle_dir, "new_" + str(pkl_file_no) + '.pkl')
+filepath_new_pickle = path.join(new_pickle_dir, str(pkl_file_no) + '.pkl')
 output = open(filepath_new_pickle, 'wb')
 pickle.dump(new_choosen_dataset, output, -1)
 output.close()
