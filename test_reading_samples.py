@@ -15,7 +15,7 @@ import wfdb
 import numpy as np
 
 dir = path.join("downloads", "af_term")
-
+i = 0
 with open("records_names") as patients_list:
 
     for patient_id in patients_list:
@@ -25,16 +25,23 @@ with open("records_names") as patients_list:
         if subdir != "learning-set":
             pass
 
-        filepath = path.join(dir, subdir, record_no)
+        else:
 
-        #record = wfdb.rdsamp(filepath, sampto=556777 + 3000, sampfrom=556777 - 3000)
-        signals, fields = wfdb.srdsamp(filepath, sampfrom=0, sampto=1000, channels=None, pbdir=None)
-        print(signals)
+            filepath = path.join(dir, subdir, record_no)
+            record = wfdb.rdsamp(filepath)
 
-        plt.ion()
-        plt.figure(1).clear()
-        plt.plot(signals[:,1])
-        plt.pause(0.5)
+            print("Dlugosc sygnalu :", record.siglen)
+
+            # Wczytuje ostatnie 2000 probek sygnalu
+            signals, fields = wfdb.srdsamp(filepath, sampfrom= record.siglen - 2001, sampto= record.siglen - 1, channels=None, pbdir=None)
+
+
+            plt.figure(i).clear()
+            plt.plot(signals[:,1])
+            plt.title(patient_id)
+            i += 1
+
+    plt.show()
 
 
 

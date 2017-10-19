@@ -23,13 +23,10 @@ class RRIntervalsAnalyser(object):
         for r_wave_index in r_waves:
             if prev_r_wave_index > 0:
                 current_rr_interval = channel[int(prev_r_wave_index - samples_margin):int(r_wave_index + samples_margin)]
-                list_of_intervals.append(rrInterval.RRInterval(current_rr_interval))
-                rr_distanses.append(int(r_wave_index - prev_r_wave_index))
-
+                if current_rr_interval != None:
+                    list_of_intervals.append(rrInterval.RRInterval(current_rr_interval))
+                    rr_distanses.append(int(r_wave_index - prev_r_wave_index))
             prev_r_wave_index = r_wave_index
-
-        #self.plot_histogram(rr_distanses, "Histogram odstępów RR")
-
         return list_of_intervals, rr_distanses
 
     # def get_list_of_intervals_isoelectric_line(self, list_of_intervals, margin_to_discard = 0.20):
