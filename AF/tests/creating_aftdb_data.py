@@ -38,7 +38,7 @@ i = 0
 
 dataset_aftdb = {}
 
-with open("records_names") as patients_list:
+with open("aftdb_record_names") as patients_list:
 
     for patient_id in patients_list:
 

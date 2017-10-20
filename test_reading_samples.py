@@ -16,7 +16,7 @@ import numpy as np
 
 dir = path.join("downloads", "af_term")
 i = 0
-with open("records_names") as patients_list:
+with open("aftdb_record_names") as patients_list:
 
     for patient_id in patients_list:
         patient_id = patient_id.replace("\n", "")
@@ -36,7 +36,7 @@ with open("records_names") as patients_list:
             signals, fields = wfdb.srdsamp(filepath, sampfrom= record.siglen - 2001, sampto= record.siglen - 1, channels=None, pbdir=None)
 
 
-            plt.figure(i).clear()
+            plt.figure(0).clear()
             plt.plot(signals[:,1])
             plt.title(patient_id)
             i += 1

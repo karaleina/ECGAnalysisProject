@@ -3,13 +3,13 @@ from biosppy import ecg
 
 from AF.algorithms.qrs_pan_thomkins_detector import QRSPanThompkinsDetector
 
-
-#Dziedziczenie???
-class Algorithm(object):
-    def name(self):
-        raise NotImplementedError()
-    def detect_r_waves(self, channel):
-        raise NotImplementedError()
+#
+# #Dziedziczenie???
+# class Algorithm(object):
+#     def name(self):
+#         raise NotImplementedError()
+#     def detect_r_waves(self, channel):
+#         raise NotImplementedError()
 
 
 class Christov(object):
