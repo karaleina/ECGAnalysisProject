@@ -6,10 +6,10 @@ from AF.medical_objects import rrInterval
 
 class RRIntervalsAnalyser(object):
 
-    def __init__(self, bothChannelsQRSDetector):
+    def __init__(self, sampling_ratio, signals):
 
-        self._sampling_ratio = bothChannelsQRSDetector._sampling_ratio
-        self._signals = bothChannelsQRSDetector._signals
+        self._sampling_ratio = sampling_ratio
+        self._signals = signals
 
     def get_intervals(self, r_waves, channel_no, time_margin=0):
 
@@ -23,7 +23,7 @@ class RRIntervalsAnalyser(object):
         for r_wave_index in r_waves:
             if prev_r_wave_index > 0:
                 current_rr_interval = channel[int(prev_r_wave_index - samples_margin):int(r_wave_index + samples_margin)]
-                if current_rr_interval != None:
+                if len(current_rr_interval) > 1:
                     list_of_intervals.append(rrInterval.RRInterval(current_rr_interval))
                     rr_distanses.append(int(r_wave_index - prev_r_wave_index))
             prev_r_wave_index = r_wave_index

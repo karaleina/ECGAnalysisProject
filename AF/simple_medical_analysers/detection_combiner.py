@@ -21,7 +21,7 @@ class DetectionCombiner():
 
         return newChannelX
 
-    def combine(self, channel1=[], channel2=[], sampling_ratio=250, tol_compare_time=0.05):
+    def combine(self, sampling_ratio, channel1=[], channel2=[], tol_compare_time=0.05):
 
         tol_samples = tol_compare_time * sampling_ratio
 

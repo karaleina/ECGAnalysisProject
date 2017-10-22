@@ -4,6 +4,7 @@ import wfdb
 import pywt
 import numpy as np
 import scipy.signal
+from AF.analyzers import bothChannelsQRSDetector, RRIntervalsAnalyser
 
 
 def calculate_number_of_samples(time_of_record, fs):
@@ -41,12 +42,18 @@ with open("downloads/af_term/aftdb_record_names") as patients_list:
             record = wfdb.rdsamp(filepath)
             n = calculate_number_of_samples(time_of_record, fs=128)
             signals, fields = wfdb.srdsamp(filepath, sampfrom= record.siglen - n - 1, sampto= record.siglen - 1, channels=None, pbdir=None)
-            channel0 = signals[:,0]
-            channel1 = signals[:,1]
 
-            # TODO RR
+            # TODO GET RRIntervals
+            rr_detector = bothChannelsQRSDetector.BothChannelsQRSDetector()
+            combined_rr = rr_detector.compare(signals=signals[:, 0:2], sampling_ratio=128)
+            rr_ia = RRIntervalsAnalyser.RRIntervalsAnalyser(sampling_ratio=128, signals=signals[:,0:2])
 
+            list_of_intervals_chann0, rr_distances_chann0 = rr_ia.get_intervals(combined_rr, channel_no=0,
+                                                                                time_margin=0.1)
+            list_of_intervals_chann1, rr_distances_chann1 = rr_ia.get_intervals(combined_rr, channel_no=1,
+                                                                                time_margin=0.1)
             # TODO SAVING records
+            # TODO Patient info
 
 # Dane z PTB:
 print("Liczba próbek do wczytania dla PTB", calculate_number_of_samples(time_of_record, fs=1000))
@@ -68,9 +75,31 @@ with open("downloads/ptb/patients.txt") as patients_list:
         channel1_filtered = antyaliasing_filtration_from_1000_to_128(channel1)
 
         # DOWNSAMPLING
-        channel0_downsampled = scipy.signal.resample(channel0_filtered, calculate_number_of_samples(time_of_record, fs=128))
-        channel1_downsampled = scipy.signal.resample(channel1_filtered, calculate_number_of_samples(time_of_record, fs=128))
+        af_number_of_samples = calculate_number_of_samples(time_of_record, fs=128)
+        channel0_downsampled = scipy.signal.resample(channel0_filtered, af_number_of_samples)
+        channel1_downsampled = scipy.signal.resample(channel1_filtered, af_number_of_samples)
 
-        # TODO RR
+        # DATASET
+        dataset = np.array([[x, y] for x, y in zip(channel0_downsampled, channel1_downsampled)])
+
+        # TODO GET RRIntervals
+        rr_detector = bothChannelsQRSDetector.BothChannelsQRSDetector()
+        combined_rr = rr_detector.compare(signals=dataset, sampling_ratio=128)
+        rr_ia = RRIntervalsAnalyser.RRIntervalsAnalyser(sampling_ratio=128, signals=dataset[:, 0:2])
+
+        list_of_intervals_chann0, rr_distances_chann0 = rr_ia.get_intervals(combined_rr, channel_no=0,
+                                                                            time_margin=0.1)
+        list_of_intervals_chann1, rr_distances_chann1 = rr_ia.get_intervals(combined_rr, channel_no=1,
+                                                                            time_margin=0.1)
+
+        for index, interval in enumerate(list_of_intervals_chann0):
+            plt.ion()
+            plt.figure(0).clear()
+            plt.subplot(2,1,1)
+            plt.plot(interval.get_signal())
+            plt.subplot(2,1,2)
+            plt.plot(list_of_intervals_chann1[index].get_signal())
+            plt.pause(0.05)
 
         # TODO SAVING records
+        # TODO Patient info

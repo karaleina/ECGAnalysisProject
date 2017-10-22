@@ -16,28 +16,28 @@ class Christov(object):
     def name(self):
         return "Christov"
 
-    def detect_r_waves(self, channel):
-        return np.array((ecg.christov_segmenter(channel, sampling_rate=250)))[0]
+    def detect_r_waves(self, channel, sampling_rate=250):
+        return np.array((ecg.christov_segmenter(channel, sampling_rate=sampling_rate)))[0]
 
 class Ssf(object):
     def name(self):
         return "SSF"
 
-    def detect_r_waves(self, channel):
-        return np.array((ecg.ssf_segmenter(channel, sampling_rate=250)))[0]
+    def detect_r_waves(self, channel, sampling_rate=250):
+        return np.array((ecg.ssf_segmenter(channel, sampling_rate=sampling_rate)))[0]
 
 class Gamboa(object):
     def name(self):
         return "Gamboa"
 
-    def detect_r_waves(self, channel):
-        return np.array(ecg.gamboa_segmenter(np.array(channel), sampling_rate=250))[0]
+    def detect_r_waves(self, channel, sampling_rate=250):
+        return np.array(ecg.gamboa_segmenter(np.array(channel), sampling_rate=sampling_rate))[0]
 
 class Thompkins(object):
     def name(self):
         return "Pan-Thompkins"
 
-    def detect_r_waves(self, channel):
+    def detect_r_waves(self, channel, sampling_rate=250):
 
         detector = QRSPanThompkinsDetector()
         a = detector.detect_qrs(channel)
@@ -52,15 +52,15 @@ class Engzee(object):
     def name(self):
         return "Engzee"
 
-    def detect_r_waves(self, channel):
-        return np.array(ecg.hamilton_segmenter(np.array(channel), sampling_rate=250))[0]
+    def detect_r_waves(self, channel, sampling_rate=250):
+        return np.array(ecg.hamilton_segmenter(np.array(channel), sampling_rate=sampling_rate))[0]
 
 class Hamilton(object):
     def name(self):
         return "Hamilton"
 
-    def detect_r_waves(self, channel):
-        return np.array(ecg.hamilton_segmenter(np.array(channel), sampling_rate=250))[0]
+    def detect_r_waves(self, channel, sampling_rate=250):
+        return np.array(ecg.hamilton_segmenter(np.array(channel), sampling_rate=sampling_rate))[0]
 
 
 
