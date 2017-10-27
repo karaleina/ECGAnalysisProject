@@ -13,21 +13,18 @@ def save_with_pickle(data, pickle_file):
 
 
 aftdb = read_with_pickle("database/step1/aftdb_corrected.pkl")
-# n1: OK
-# n2: OK
 # n3: CALE ZLE????
 # s9: fala P?
 
+list_names = ['n0' + str(i) if i < 10 else 'n' + str(i) for i in range(1, 11)]
+list_names += ['s0' + str(i) if i < 10 else 's' + str(i) for i in range(1, 11)]
+list_names += ['t0' + str(i) if i < 10 else 't' + str(i) for i in range(1, 10)]
+print(list_names)
 
 for patient_record in aftdb:
-    list_names = ['n0' + str(i) if i < 10 else 'n' + str(i) for i in range(1,11)]
-    list_names += ['s0' + str(i) if i < 10 else 'n' + str(i) for i in range(1,9)]
-    print(list_names)
     if not patient_record in list_names:
         temp_patient_dataset = aftdb[patient_record]
-
         for index in range(len(temp_patient_dataset["channel0"])):
-
             # SHOWING
             plt.ion()
             plt.figure(1).clear()
@@ -37,7 +34,7 @@ for patient_record in aftdb:
             plt.plot(aftdb[patient_record]["channel1"][index].get_signal())
             plt.suptitle(patient_record + "_" + str(index))
 
-            # TODO correcting
+            # CORRECTING
             user_input = input("Type 'del' if intend to delete this RR segment")
             if user_input=="del":
                 del temp_patient_dataset["channel0"][index]
