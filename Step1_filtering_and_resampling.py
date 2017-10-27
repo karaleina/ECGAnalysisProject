@@ -67,6 +67,25 @@ with open("downloads/af_term/aftdb_record_names") as patients_list:
                                 "channel1": list_of_intervals_chann1}
             aftdb_dataset[patient_name] = data_for_patient
 
+            if record_no == 'n03':
+
+                plt.ioff()
+                plt.figure(1).clear()
+                plt.subplot(2, 1, 1)
+                plt.plot(signals[:, 0])
+                plt.subplot(2, 1, 2)
+                plt.plot(signals[:, 1])
+                plt.show()
+
+                for index, interval in enumerate(list_of_intervals_chann0):
+                    plt.ion()
+                    plt.figure(1).clear()
+                    plt.subplot(2,1,1)
+                    plt.plot(interval.get_signal())
+                    plt.subplot(2,1,2)
+                    plt.plot(list_of_intervals_chann1[index].get_signal())
+                    plt.pause(0.5)
+
         else:
             break
 

@@ -1,24 +1,30 @@
 import pickle
 from matplotlib import pyplot as plt
 
+
 def read_with_pickle(file_name):
     with open(file_name, 'rb') as f:
         return pickle.load(f)
 
 
-aftdb = read_with_pickle("database/step1/aftdb.pkl")
+def save_with_pickle(data, pickle_file):
+    with open(pickle_file, 'wb') as f:
+        pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+
+
+aftdb = read_with_pickle("database/step1/aftdb_corrected.pkl")
 # n1: OK
 # n2: OK
 # n3: CALE ZLE????
+# s9: fala P?
 
 
 for patient_record in aftdb:
-
-    if not patient_record in ['n01', 'n02']:
+    list_names = ['n0' + str(i) if i < 10 else 'n' + str(i) for i in range(1,11)]
+    list_names += ['s0' + str(i) if i < 10 else 'n' + str(i) for i in range(1,9)]
+    print(list_names)
+    if not patient_record in list_names:
         temp_patient_dataset = aftdb[patient_record]
-
-        new_patient_dataset = {"channel0": [],
-                               "channel1": []}
 
         for index in range(len(temp_patient_dataset["channel0"])):
 
@@ -37,5 +43,11 @@ for patient_record in aftdb:
                 del temp_patient_dataset["channel0"][index]
                 del temp_patient_dataset["channel1"][index]
                 print("Dlugosc listy zalamkow dla pacjenta " + patient_record + " : " + str(len(temp_patient_dataset["channel0"])))
+                user_input2 = input("Type 'save' if intend to save this corrections")
+                if user_input2 == "save":
+                    aftdb[patient_record] = temp_patient_dataset
+                    new_file_name_pkl = 'database/step1/aftdb_corrected.pkl'
+                    save_with_pickle(aftdb, new_file_name_pkl)
+                    print("Zapisano do " + new_file_name_pkl)
 
             plt.pause(0.05)
