@@ -6,6 +6,14 @@ You need to run it after making any modifications to
 aftdb_corrected or ptb pkl data"""
 
 
+def element_is_proper_interval(potential_interval):
+    try:
+        potential_interval.get_signal()
+        return True
+    except AttributeError:
+        return False
+
+
 def add_test_and_train_datasets(train_dataset, test_dataset, database):
     """Creating TEST and TRAIN datasets as dictionaries
     with names of patients as keys"""
@@ -23,14 +31,18 @@ def add_test_and_train_datasets(train_dataset, test_dataset, database):
                            "diagnose": "AF"}
 
         for rr_index in range(len(list_rr_channel0)):
-            if rr_index % 2 == 0:
-                train_dataset[patient]["channel0"].append(list_rr_channel0[rr_index])
-                train_dataset[patient]["channel1"].append(list_rr_channel1[rr_index])
-            else:
-                test_dataset[patient]["channel0"].append(list_rr_channel0[rr_index])
-                test_dataset[patient]["channel1"].append(list_rr_channel1[rr_index])
+            if element_is_proper_interval(list_rr_channel0[rr_index]) \
+                    and element_is_proper_interval(list_rr_channel0[rr_index]):
+
+                if rr_index % 2 == 0:
+                    train_dataset[patient]["channel0"].append(list_rr_channel0[rr_index])
+                    train_dataset[patient]["channel1"].append(list_rr_channel1[rr_index])
+                else:
+                    test_dataset[patient]["channel0"].append(list_rr_channel0[rr_index])
+                    test_dataset[patient]["channel1"].append(list_rr_channel1[rr_index])
 
     return train_dataset, test_dataset
+
 
 if __name__ == "__main__":
 
