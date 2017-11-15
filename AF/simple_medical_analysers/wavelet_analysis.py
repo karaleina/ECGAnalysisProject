@@ -1,44 +1,61 @@
 import numpy as np
 import pywt
 
+#TODO find mistake :((((
+#TODO Dlaczego dla haara i db1 obliczanie energii dziala a dla pozostalych juz nie???
 
-def filter_signal(signal, wavelet="db6"):
+class DWTWaveletAnalyser(object):
 
-    try:
-        (cA, cD) = pywt.dwt(signal, wavelet)
-        (cA2, cD2) = pywt.dwt(cA, wavelet)
-        (cA3, cD3) = pywt.dwt(cA2, wavelet)
-        (cA4, cD4) = pywt.dwt(cA3, wavelet)
-        (cA5, cD5) = pywt.dwt(cA4, wavelet)
-        (cA6, cD6) = pywt.dwt(cA5, wavelet)
-        (cA7, cD7) = pywt.dwt(cA6, wavelet)
+    def __init__(self):
+        pass
 
-        cA7 = np.zeros(len(cA7)) # odcięcie składowej stałej poniżej 1 Hz
-        list_of_coeffs = [cA7, cD7, cD6, cD5, cD4, cD3, cD2, cD]
+    @staticmethod
+    def __calculate_signal_energy(coeff):
+        return np.sum(np.power(coeff,2))
 
-        return pywt.waverec(list_of_coeffs, wavelet)
+    @staticmethod
+    def get_wavelet_af_energy(signal, wavelet="db2", frequency=None):
+        if frequency == 128:
+            (cA1, cD1) = pywt.dwt(signal, wavelet)
+            (cA2, cD2) = pywt.dwt(cA1, wavelet)
+            (cA3, cD3) = pywt.dwt(cA2, wavelet)
+            (cA4, cD4) = pywt.dwt(cA3, wavelet)
+            (cA4_prim, cD4_prim) = pywt.dwt(cD3, wavelet)
+            (cA5, cD5) = pywt.dwt(cD4, wavelet)
+            (cA5_prim, cD5_prim) = pywt.dwt(cA4_prim, wavelet)
 
-    except ValueError:
-        print("Wavelet transform except even number of samples only.")
+            # Normalizated sum of energy
+            coeffs_of_interest = []
+            coeffs_of_interest.append(cA5_prim)
+            coeffs_of_interest.append(cD5)
 
+            normed_coeff_energy = DWTWaveletAnalyser.__calculate_signal_energy(coeffs_of_interest)/DWTWaveletAnalyser.__calculate_signal_energy(signal)
+            if 0 <= normed_coeff_energy <= 1:
+                return normed_coeff_energy
+            else:
+                print("Normed coeff out of range")
+                raise Exception
+        else:
+            print("Method for this sampling frequency is not implemented")
+            raise Exception
 
-def get_AF_energy(signal, wavelet="dmey"):
+if __name__ == "__main__":
+    wa = DWTWaveletAnalyser()
+    signal = [-0.031106732054943503, -0.027075565578163548, -0.023739438973024399, -0.035514418404423521,
+              -0.023743572957684235, -0.025549072601587307, -0.033014631455391699, -0.022373360049267148,
+              -0.066319969137109636, -0.12466057277215448, -0.078972188075955074, 0.081623028766848835,
+              0.17923248227991034, 0.22542831369649141, 0.053834699320265522, -0.17512454047573361,
+              -0.16951528323463053, -0.068339896171835834, -0.03333197389110349, -0.039805522232248418,
+              -0.015458399094210963, -0.030185759485728617, -0.010033651259950961, -0.019717371372857541,
+              -0.0094197589081063821, 0.0039829654967994885, 0.0013884362876774303, 0.010508800959045855,
+              0.0083081928345605238, 0.006288284641870312, 0.027766928201960014, 0.021918384730632054,
+              0.044991219786835721, 0.050153173060326822, 0.051663581733819131, 0.073036395347007163,
+              0.073778552713310214, 0.093638244195596035, 0.11403952096343323, 0.11801716230487214,
+              0.14330081701656405, 0.13705889173218744, 0.14670753818318086, 0.1625696596012523, 0.1504920066538962,
+              0.14060090591758678, 0.11177409744419707, 0.08297898535992021, 0.066834369064864951, 0.028825721954836146,
+              0.019903538667998981, 0.0035717430948578772, -0.0086060855838045111, -0.0086957589186762042,
+              -0.017388801904295783, -0.01074513195060715, -0.011737142646734066, -0.026394521404685185,
+              -0.013966783033621432, -0.026416674811952104, -0.018283744446157584, -0.012762743323635561,
+              -0.025690956637763357, -0.016589674395630607, -0.023361470612374369, -0.022456894346982042, -0.018001536758109216, -0.031497136170965653, -0.013329234616919509, -0.022172580571858842, -0.030061957904245741, -0.017997003790469798, -0.02622474284890796, -0.017722313553499749, -0.026029516388481541, -0.033781142718318433, -0.02166963061064452, -0.031374730755447527, -0.018219099151021406, -0.022990922793060222, -0.038590513414526406, -0.024180020905025926, -0.033650364464872143, -0.03255000833548935, -0.016738123027584505, -0.0092177861350232499, 0.012976608126309599, -0.0029463071227871993, 0.0032581012383066307, -0.0058314647898147845, -0.028127943957774182, -0.016044427795467889, -0.025454395223495671, -0.035080902235371039, -0.019098558246710261, -0.033486938486096941, -0.029075329217345933, -0.036098359121455391, -0.036132354039553068, -0.028660818934672733, -0.035500594736952634, -0.031928401348263975, -0.054801425458241529, -0.13877916962098263, -0.057586726988110348, 0.07829534424677656, 0.18339944459185625, 0.21961103849673902, 0.0074582259704306653, -0.17519951877995266, -0.1762243423009674, -0.060800810047603876, -0.031532856746077559, -0.037161214589264045, -0.015751231507807009, -0.0092343389748190327, -0.016678263324249674, -0.0011810199181272255, -0.0087212640535750674]
 
-    old_signal = signal
-
-    (cA, cD) = pywt.dwt(signal, wavelet)
-    (cA2, cD2) = pywt.dwt(cA, wavelet)
-    (cA3, cD3) = pywt.dwt(cA2, wavelet)
-    (cA4, cD4) = pywt.dwt(cA3, wavelet)
-    (cA5, cD5) = pywt.dwt(cA4, wavelet)
-    (cA6, cD6) = pywt.dwt(cA5, wavelet)
-    (cA52, cD52 ) = pywt.dwt(cD4, wavelet)
-
-    #module = abs(np.max(signal) - np.min(signal))
-    cALL = [list(cD6) + list(cD5) + list(cA52)]
-    coeffs_energy = np.sum(np.power(cALL, 2))
-    signal_energy = np.sum(np.power(old_signal, 2))
-    norm_coeffs_energy = coeffs_energy /signal_energy
-    return norm_coeffs_energy
-
-
+    print(wa.get_wavelet_af_energy(signal, frequency=128))
