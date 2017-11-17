@@ -14,7 +14,7 @@ def element_is_proper_interval(potential_interval):
         return False
 
 
-def add_test_and_train_datasets(train_dataset, test_dataset, database):
+def add_test_and_train_datasets(train_dataset, test_dataset, database, diagnose):
     """Creating TEST and TRAIN datasets as dictionaries
     with names of patients as keys"""
 
@@ -24,11 +24,11 @@ def add_test_and_train_datasets(train_dataset, test_dataset, database):
 
         train_dataset[patient] = {"channel0": [],
                             "channel1": [],
-                            "diagnose": "AF"}
+                            "diagnose": diagnose}
 
         test_dataset[patient] = {"channel0": [],
                            "channel1": [],
-                           "diagnose": "AF"}
+                           "diagnose": diagnose}
 
         for rr_index in range(len(list_rr_channel0)):
             if element_is_proper_interval(list_rr_channel0[rr_index]) \
@@ -53,9 +53,9 @@ if __name__ == "__main__":
     X_train = {}
     X_test = {}
 
-    for database in [aftdb, ptb]:
+    for database, diagnose in zip([aftdb, ptb], ["aftdb", "ptb"]):
         X_train, X_test = add_test_and_train_datasets(
-            train_dataset=X_train, test_dataset=X_test, database=database)
+            train_dataset=X_train, test_dataset=X_test, database=database, diagnose=diagnose)
 
     save_with_pickle(X_train, "database/step3/X_train.pkl")
     save_with_pickle(X_test, "database/step3/X_test.pkl")

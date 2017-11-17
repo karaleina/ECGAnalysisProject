@@ -1,8 +1,8 @@
 from Step2_reading_and_correcting import read_with_pickle
 from AF.tools.pca_tools import PCADimensionAnalyser
 from matplotlib import pyplot as plt
+import numpy as np
 from AF.simple_medical_analysers.wavelet_analysis import  DWTWaveletAnalyser
-
 
 
 def transform_dataset_into_pcas_datasets(dataset):
@@ -30,14 +30,16 @@ def transform_dataset_into_pcas_datasets(dataset):
 
     return new_dataset
 
+
 def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
     new_dataset = dataset.copy()
     for patient in dataset:
         list_rr_channel0 = dataset[patient]["channel0"]
         list_rr_channel1 = dataset[patient]["channel1"]
+        dataset[patient]["coeffs"] = np.empty((len(list_rr_channel0),2))
         for index in range(len(list_rr_channel0)):
             signal0 = list_rr_channel0[index].get_signal()
-            signal1 = list_rr_channel0[index].get_signal()
+            signal1 = list_rr_channel1[index].get_signal()
 
             try:
                 # Calculate coeffs
@@ -46,11 +48,14 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
                 norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
 
                 # Updating
-                new_dataset[patient]["coeffs_pca"][index] = [norm_coeff0, norm_coeff1]
+                new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
+
 
             except Exception:
                 # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
                 pass
+    return new_dataset
+
 
 if __name__ == "__main__":
 
@@ -59,13 +64,23 @@ if __name__ == "__main__":
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
 
-    # PCA
-    X_test_pcas = transform_dataset_into_pcas_datasets(X_test)
-    X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
+    # # PCA
+    # X_test_pcas = transform_dataset_into_pcas_datasets(X_test)
+    # X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
 
     # Wavelets
-    X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test_pcas)
-    X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train_pcas)
+    # TODO Solve Problem with coeeff calculating and normalization
+
+    X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet="db7")
+    X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet="db7")
+
+    # Data wizualization
+    plt.figure(1)
+    for patient_name in X_train_wavelets_coeffs:
+        coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
+        color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
+        plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
+    plt.show()
 
     # TODO testy NN z obecnym stanem prac
     # TODO falki
