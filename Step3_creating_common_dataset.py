@@ -43,6 +43,9 @@ def create_test_and_train_datasets(train_dataset, test_dataset, database, diagno
                     test_dataset[patient]["channel1"].append(list_rr_channel1[rr_index])
                     print("TEST")
 
+    print(len(train_dataset[patient]["channel0"]))
+    print(len(test_dataset[patient]["channel0"]))
+
     return train_dataset, test_dataset
 
 

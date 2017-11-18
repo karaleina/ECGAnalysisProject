@@ -32,7 +32,7 @@ def transform_dataset_into_pcas_datasets(dataset):
 
 
 def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
-    new_dataset = dataset.copy()
+    new_dataset = dataset
     for patient in dataset:
         list_rr_channel0 = dataset[patient]["channel0"]
         list_rr_channel1 = dataset[patient]["channel1"]
@@ -60,7 +60,6 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
 
 if __name__ == "__main__":
 
-
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
@@ -69,13 +68,17 @@ if __name__ == "__main__":
     # X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
 
     # Wavelets
-    # TODO Solve Problem with coeeff calculating and normalization
     # TODO Number of samples!!!
 
     wavelet = "db5"
 
     X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet)
     X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet)
+
+    if X_test_wavelets_coeffs is X_train_wavelets_coeffs:
+        print("To są te same obiekty")
+    else:
+        print("To nie są te same obiekty")
 
     # Data wizualization
     plt.figure(1)
@@ -91,7 +94,7 @@ if __name__ == "__main__":
 
     plt.figure(2)
     for patient_name in X_train_wavelets_coeffs:
-        coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
+        coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
         color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
         plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
         x = coeffs[:, 0]
