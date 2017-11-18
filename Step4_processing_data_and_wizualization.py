@@ -41,6 +41,7 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
             signal0 = list_rr_channel0[index].get_signal()
             signal1 = list_rr_channel1[index].get_signal()
 
+
             try:
                 # Calculate coeffs
                 dwt_a = DWTWaveletAnalyser()
@@ -59,27 +60,44 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
 
 if __name__ == "__main__":
 
-    # PCA
+
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
-
-    # # PCA
+    # PCA pca przynosi odwrotny skutek!!!!!!!!!!! REZYGNUJĘ
     # X_test_pcas = transform_dataset_into_pcas_datasets(X_test)
     # X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
 
     # Wavelets
     # TODO Solve Problem with coeeff calculating and normalization
+    # TODO Number of samples!!!
 
-    X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet="db7")
-    X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet="db7")
+    wavelet = "db5"
+
+    X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet)
+    X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet)
 
     # Data wizualization
     plt.figure(1)
+    for patient_name in X_test_wavelets_coeffs:
+        coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
+        color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
+        plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
+        x = coeffs[:, 0]
+        y = coeffs[:, 1]
+
+    print(x[0], y[0])
+
+
+    plt.figure(2)
     for patient_name in X_train_wavelets_coeffs:
         coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
         color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
         plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
+        x = coeffs[:, 0]
+        y = coeffs[:, 1]
+
+    print(x[0], y[0])
     plt.show()
 
     # TODO testy NN z obecnym stanem prac
