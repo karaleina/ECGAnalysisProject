@@ -11,7 +11,7 @@ class DWTWaveletAnalyser(object):
 
     @staticmethod
     def __calculate_signal_energy(coeff):
-        return np.sum(np.power(coeff,2))
+        return np.sum(np.power(np.absolute(coeff),2))
 
     @staticmethod
     def get_wavelet_af_energy(signal, wavelet="db2", frequency=None):

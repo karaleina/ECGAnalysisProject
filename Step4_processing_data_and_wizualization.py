@@ -2,6 +2,8 @@ from Step2_reading_and_correcting import read_with_pickle
 from AF.tools.pca_tools import PCADimensionAnalyser
 from matplotlib import pyplot as plt
 import numpy as np
+import pywt
+from PyEMD import EMD
 from AF.simple_medical_analysers.wavelet_analysis import  DWTWaveletAnalyser
 
 
@@ -42,20 +44,58 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
             signal1 = list_rr_channel1[index].get_signal()
 
 
-            try:
-                # Calculate coeffs
-                dwt_a = DWTWaveletAnalyser()
-                norm_coeff0 = dwt_a.get_wavelet_af_energy(signal0, frequency=128, wavelet=wavelet)
-                norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
 
-                # Updating
-                new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
+            # Calculate coeffs
+            dwt_a = DWTWaveletAnalyser()
+            norm_coeff0 = dwt_a.get_wavelet_af_energy(signal0, frequency=128, wavelet=wavelet)
+            norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
+
+            # Updating
+            new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
 
 
-            except Exception:
-                # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
-                pass
+
+            # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
+            pass
     return new_dataset
+
+
+def calculate_emd_and_show(dataset):
+    dictionary = {"aftdb": {"var":[],
+                          "std":[]},
+                  "ptb":   {"var":[],
+                          "std":[]}
+                  }
+    for patient in dataset:
+        list_rr_channel0 = dataset[patient]["channel0"]
+        list_rr_channel1 = dataset[patient]["channel1"]
+
+        if dataset[patient]["diagnose"] == "ptb":
+            for index in range(len(list_rr_channel0)):
+                signal0 = list_rr_channel0[index].get_signal()
+                signal1 = list_rr_channel1[index].get_signal()
+
+                emd = EMD()
+                eIMFs0 = emd.emd(signal0)
+                number_of_imfs = len(eIMFs0)
+                for i in range(number_of_imfs):
+                    fig = plt.figure(1)
+                    plt.subplot(number_of_imfs,1,i+1)
+                    plt.plot(eIMFs0[i, :])
+                    fig.savefig(patient + "_" + str(dataset[patient]["diagnose"]) +  "_chann_0_" + ".jpg")
+
+                emd = EMD()
+                eIMFs1 = emd.emd(signal1)
+                number_of_imfs = len(eIMFs1)
+                for i in range(number_of_imfs):
+                    fig = plt.figure(2)
+                    plt.subplot(number_of_imfs, 1, i + 1)
+                    plt.plot(eIMFs1[i, :])
+                    fig.savefig(patient + "_" + str(dataset[patient]["diagnose"]) + "_chann_1_" + ".jpg")
+
+                break
+
+
 
 
 if __name__ == "__main__":
@@ -63,44 +103,38 @@ if __name__ == "__main__":
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
+
+    #calculate_emd_and_show(X_test)
+
     # PCA pca przynosi odwrotny skutek!!!!!!!!!!! REZYGNUJĘ
     # X_test_pcas = transform_dataset_into_pcas_datasets(X_test)
     # X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
 
     # Wavelets
     # TODO Number of samples!!!
+    #dbs = ["db" + str(i) for i in range(1, 21)]
+    #syms = ["sym" + str(i) for i in range(2, 21)]
+    #coifs = ["coif" + str(i) for i in range(1,6)]
 
-    wavelet = "db5"
-
+    #for index, wavelet in enumerate(pywt.wavelist(family=None, kind='all')):
+    wavelet = "db2"
     X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet)
     X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet)
 
-    if X_test_wavelets_coeffs is X_train_wavelets_coeffs:
-        print("To są te same obiekty")
-    else:
-        print("To nie są te same obiekty")
-
-    # Data wizualization
-    plt.figure(1)
+    #Data wizualization
+    plt.figure(2)
     for patient_name in X_test_wavelets_coeffs:
         coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
         color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
         plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-        x = coeffs[:, 0]
-        y = coeffs[:, 1]
+        plt.title("Falka " + wavelet)
 
-    print(x[0], y[0])
-
-
-    plt.figure(2)
-    for patient_name in X_train_wavelets_coeffs:
-        coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
-        color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
-        plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-        x = coeffs[:, 0]
-        y = coeffs[:, 1]
-
-    print(x[0], y[0])
+    # plt.figure(2)
+    # for patient_name in X_train_wavelets_coeffs:
+    #     coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
+    #     color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
+    #     plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
+    #     plt.title("Falka" + wavelet)
     plt.show()
 
     # TODO testy NN z obecnym stanem prac
