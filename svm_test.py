@@ -3,6 +3,7 @@ from sklearn.datasets import make_classification
 from matplotlib import pyplot as plt
 
 X, y = make_classification(n_features=4, random_state=0)
+# X - 2D array: 1) nr punktu, 2) cecha
 clf = LinearSVC(random_state=0)
 clf.fit(X, y)
 

@@ -2,7 +2,6 @@ from Step2_reading_and_correcting import read_with_pickle
 from AF.tools.pca_tools import PCADimensionAnalyser
 from matplotlib import pyplot as plt
 import numpy as np
-import pywt
 from PyEMD import EMD
 from AF.simple_medical_analysers.wavelet_analysis import  DWTWaveletAnalyser
 
@@ -34,10 +33,12 @@ def transform_dataset_into_pcas_datasets(dataset):
 
 
 def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
+    all = []
     new_dataset = dataset
     for patient in dataset:
         list_rr_channel0 = dataset[patient]["channel0"]
         list_rr_channel1 = dataset[patient]["channel1"]
+        diagnose = dataset[patient]["diagnose"]
         dataset[patient]["coeffs"] = np.empty((len(list_rr_channel0),2))
         for index in range(len(list_rr_channel0)):
             signal0 = list_rr_channel0[index].get_signal()
@@ -51,14 +52,12 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
             norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
 
             # Updating
-            new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
-
-
-
+            record_data = [norm_coeff0, norm_coeff1, diagnose, patient]
+            all.append(record_data)
+            # new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
             # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
             pass
-    return new_dataset
-
+    return all
 
 def calculate_emd_and_show(dataset):
     dictionary = {"aftdb": {"var":[],
@@ -96,46 +95,72 @@ def calculate_emd_and_show(dataset):
                 break
 
 
-
-
 if __name__ == "__main__":
 
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
 
-    #calculate_emd_and_show(X_test)
+    # TODO Add more features to dataset for classification
 
-    # PCA pca przynosi odwrotny skutek!!!!!!!!!!! REZYGNUJĘ
-    # X_test_pcas = transform_dataset_into_pcas_datasets(X_test)
-    # X_train_pcas = transform_dataset_into_pcas_datasets(X_train)
 
-    # Wavelets
-    # TODO Number of samples!!!
-    #dbs = ["db" + str(i) for i in range(1, 21)]
-    #syms = ["sym" + str(i) for i in range(2, 21)]
-    #coifs = ["coif" + str(i) for i in range(1,6)]
+    # TODO Make X dataset for SVM  and SNN
+    # TODO Make Y dataset for SVM and SNN
 
-    #for index, wavelet in enumerate(pywt.wavelist(family=None, kind='all')):
+    # TODO Test SNN and SVM
+
+
     wavelet = "db2"
     X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet)
     X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet)
 
-    #Data wizualization
-    plt.figure(2)
-    for patient_name in X_test_wavelets_coeffs:
-        coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
-        color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
-        plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-        plt.title("Falka " + wavelet)
+    print(X_test_wavelets_coeffs)
 
+
+    # #Data wizualization
     # plt.figure(2)
-    # for patient_name in X_train_wavelets_coeffs:
-    #     coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
+    # for patient_name in X_test_wavelets_coeffs:
+    #     coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
     #     color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
     #     plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-    #     plt.title("Falka" + wavelet)
-    plt.show()
+    #     plt.title("Falka " + wavelet)
+    #
+    # # plt.figure(2)
+    # # for patient_name in X_train_wavelets_coeffs:
+    # #     coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
+    # #     color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
+    # #     plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
+    # #     plt.title("Falka" + wavelet)
+    # plt.show()
+    #
+    # SVM
+    #
+    # # PARAMS
+    # dual_problem = False  # dual=False when n_samples > n_features.
+    # class1 = 1  # only for plotting
+    # class2 = 0  # only for plotting
+    #
+    # LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
+    #           intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+    #           multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+    #           verbose=0)
+    #
+    # new_y = clf.decision_function(X)
+    # print(new_y)
+    #
+    # # PLOTTING
+    # plt.figure(1)
+    # for index, class_y in enumerate(y):
+    #     color = "blue" if class_y == 0 else "red"
+    #     plt.scatter([X[index, class1]], X[index, class2], color=color)
+    #
+    # # PLOTTING
+    # plt.figure(2)
+    # for index, class_y in enumerate(new_y):
+    #     color = "blue" if class_y < 0 else "red"
+    #     plt.scatter([X[index, class1]], X[index, class2], color=color)
+    # plt.show()
+
 
     # TODO testy NN z obecnym stanem prac
     # TODO falki
