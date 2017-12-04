@@ -1,10 +1,11 @@
 from Step2_reading_and_correcting import read_with_pickle
 from AF.tools.pca_tools import PCADimensionAnalyser
+from AF.simple_medical_analysers.wavelet_analysis import DWTWaveletAnalyser
+from AF.analyzers.qualityEvaluation import calculate_quality_of_classification
 from matplotlib import pyplot as plt
 import numpy as np
 from PyEMD import EMD
 from sklearn.svm import LinearSVC
-from AF.simple_medical_analysers.wavelet_analysis import  DWTWaveletAnalyser
 
 
 def transform_dataset_into_pcas_datasets(dataset):
@@ -59,6 +60,7 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
             # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
             pass
     return all
+
 
 def calculate_emd_and_show(dataset):
     dictionary = {"aftdb": {"var":[],
@@ -119,7 +121,6 @@ if __name__ == "__main__":
     for element in X_test_wavelets_coeffs:
         color = "blue" if element[2] == "ptb" else "red"
         plt.scatter(element[0], element[1], color=color)
-    plt.show()
 
     # SVM
     X = X_train_wavelets_coeffs[:,0:2]
@@ -134,12 +135,18 @@ if __name__ == "__main__":
               verbose=0)
 
     new_y = clf.decision_function(X)
+    new_y = [0 if element < 0 else 1 for element in new_y]
     print(new_y)
+
+    quality = calculate_quality_of_classification(y_real=y, y_predictions=new_y)
+    print("Specyficznosc:", quality["specifity"])
+    print("Czułość:", quality["sensitivity"])
+
 
     # Data visualisation
     plt.figure(2)
     for index, class_y in enumerate(new_y):
-        color = "blue" if class_y < 0 else "red"
+        color = "blue" if class_y <= 0 else "red"
         plt.scatter(X[index,0], X[index,1] , color=color)
     plt.show()
 
