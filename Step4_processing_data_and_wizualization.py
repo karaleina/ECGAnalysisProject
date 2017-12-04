@@ -3,6 +3,7 @@ from AF.tools.pca_tools import PCADimensionAnalyser
 from matplotlib import pyplot as plt
 import numpy as np
 from PyEMD import EMD
+from sklearn.svm import LinearSVC
 from AF.simple_medical_analysers.wavelet_analysis import  DWTWaveletAnalyser
 
 
@@ -110,31 +111,38 @@ if __name__ == "__main__":
     # TODO Test SNN and SVM
 
 
-    wavelet = "db2"
-    X_test_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet)
-    X_train_wavelets_coeffs = transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet)
+    wavelet = "db6"
+    X_test_wavelets_coeffs = np.array(transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet))
+    X_train_wavelets_coeffs = np.array(transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet))
 
-    print(X_test_wavelets_coeffs)
+    # Data visualisation
+    for element in X_test_wavelets_coeffs:
+        color = "blue" if element[2] == "ptb" else "red"
+        plt.scatter(element[0], element[1], color=color)
+    plt.show()
 
-
-    # #Data wizualization
-    # plt.figure(2)
-    # for patient_name in X_test_wavelets_coeffs:
-    #     coeffs = X_test_wavelets_coeffs[patient_name]["coeffs"]
-    #     color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
-    #     plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-    #     plt.title("Falka " + wavelet)
-    #
-    # # plt.figure(2)
-    # # for patient_name in X_train_wavelets_coeffs:
-    # #     coeffs = X_train_wavelets_coeffs[patient_name]["coeffs"]
-    # #     color = "red" if X_test_wavelets_coeffs[patient_name]["diagnose"] == "aftdb" else "blue"
-    # #     plt.scatter(x=coeffs[:,0], y=coeffs[:,1], color=color)
-    # #     plt.title("Falka" + wavelet)
-    # plt.show()
-    #
     # SVM
-    #
+    X = X_train_wavelets_coeffs[:,0:2]
+    X = X.astype('float')
+    y = [1 if element=="aftdb" else 0 for element in X_train_wavelets_coeffs[:,2]]
+    clf = LinearSVC(random_state=0)
+    clf.fit(X, y)
+    dual_problem = False  # dual=False when n_samples > n_features.
+    LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
+              intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+              multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+              verbose=0)
+
+    new_y = clf.decision_function(X)
+    print(new_y)
+
+    # Data visualisation
+    plt.figure(2)
+    for index, class_y in enumerate(new_y):
+        color = "blue" if class_y < 0 else "red"
+        plt.scatter(X[index,0], X[index,1] , color=color)
+    plt.show()
+
     # # PARAMS
     # dual_problem = False  # dual=False when n_samples > n_features.
     # class1 = 1  # only for plotting
