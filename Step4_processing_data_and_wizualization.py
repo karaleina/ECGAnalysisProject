@@ -34,9 +34,10 @@ def transform_dataset_into_pcas_datasets(dataset):
     return new_dataset
 
 
-def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
-    all = []
-    new_dataset = dataset
+def transform_dataset_into_coeffs_dataset(dataset, *wavelets_names):
+    X_coeffs_dataset = []
+    y_info_dataset = []
+
     for patient in dataset:
         list_rr_channel0 = dataset[patient]["channel0"]
         list_rr_channel1 = dataset[patient]["channel1"]
@@ -45,21 +46,17 @@ def transform_dataset_into_coeffs_dataset(dataset, wavelet="db2"):
         for index in range(len(list_rr_channel0)):
             signal0 = list_rr_channel0[index].get_signal()
             signal1 = list_rr_channel1[index].get_signal()
-
-
-
-            # Calculate coeffs
-            dwt_a = DWTWaveletAnalyser()
-            norm_coeff0 = dwt_a.get_wavelet_af_energy(signal0, frequency=128, wavelet=wavelet)
-            norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
-
+            record_data = []
+            for wavelet in wavelets_names:
+                # Calculate coeffs
+                dwt_a = DWTWaveletAnalyser()
+                norm_coeff0 = dwt_a.get_wavelet_af_energy(signal0, frequency=128, wavelet=wavelet)
+                norm_coeff1 = dwt_a.get_wavelet_af_energy(signal1, frequency=128, wavelet=wavelet)
+                record_data.extend((norm_coeff0, norm_coeff1))
             # Updating
-            record_data = [norm_coeff0, norm_coeff1, diagnose, patient]
-            all.append(record_data)
-            # new_dataset[patient]["coeffs"][index, :] = [norm_coeff0, norm_coeff1]
-            # TODO Co zrobic z tym, ze wtedy nie bedzie mial pacjent w tym zalamku coeffsow
-            pass
-    return all
+            y_info_dataset.append([diagnose, patient])
+            X_coeffs_dataset.append(record_data)
+    return np.array(X_coeffs_dataset), np.array(y_info_dataset)
 
 
 def calculate_emd_and_show(dataset):
@@ -100,34 +97,35 @@ def calculate_emd_and_show(dataset):
 
 if __name__ == "__main__":
 
+    # TODO Test SNN and SVM i klasteryzacji automatycznej K-MEANS
+    # TODO testy NN z obecnym stanem prac
+    # TODO Douczanie samych przypadków trudnych:
+    #  - z niezgodną przynależnością -  sieć neuronowa
+    # - wytypowanie falek do ogolnej klasyfikacji i douczenia przypadkow trudnych
+    # TODO falki
+    # TODO emd
+
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
+    # DMEY, DB6
+    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17", "dmey", "haar")
+    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17", "dmey", "haar")
 
-    # TODO Add more features to dataset for classification
-    # TODO Make X dataset for SVM  and SNN
-    # TODO Make Y dataset for SVM and SNN
-    # TODO Test SNN and SVM
+    # ---- Wizualization parameters -----
+    class_no_1 = 1
+    class_no_2 = 2
 
-    wavelet = "db6"
-    X_test_wavelets_coeffs = np.array(transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet))
-    X_train_wavelets_coeffs = np.array(transform_dataset_into_coeffs_dataset(X_train, wavelet=wavelet))
-
-    # Data visualisation
-    for element in X_test_wavelets_coeffs:
-        color = "blue" if element[2] == "ptb" else "red"
-        plt.scatter(element[0], element[1], color=color)
-
-    # SVM
-    X_train_SVM = X_train_wavelets_coeffs[:, 0:2]
+    # ----------------- SVM ---------------------
+    # Datasets
+    X_train_SVM = X_train_wavelets_coeffs
     X_train_SVM = X_train_SVM.astype('float')
-    y_train_SVM = [1 if element == "aftdb" else 0 for element in X_train_wavelets_coeffs[:, 2]]
-
-    X_test_SVM = X_test_wavelets_coeffs[:, 0:2]
+    y_train_SVM = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:,0]]
+    X_test_SVM = X_test_wavelets_coeffs
     X_test_SVM = X_test_SVM.astype('float')
-    y_test_SVM = [1 if element == "aftdb" else 0 for element in X_test_wavelets_coeffs[:, 2]]
+    y_test_SVM = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:,0]]
 
-    # TRAIN
+    # Training
     clf = LinearSVC(random_state=0)
     clf.fit(X_train_SVM, y_train_SVM)
     dual_problem = False  # dual=False when n_samples > n_features.
@@ -136,7 +134,7 @@ if __name__ == "__main__":
               multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
               verbose=0)
 
-    # TEST
+    # Testing
     new_y_test = clf.decision_function(X_test_SVM)
     new_y_test = [0 if element < 0 else 1 for element in new_y_test]
     print(new_y_test)
@@ -145,41 +143,24 @@ if __name__ == "__main__":
     print("Specyficznosc:", quality["specifity"])
     print("Czułość:", quality["sensitivity"])
 
+    # -------------- Data visualisation ---------------------------------
+    for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+        color = "blue" if y_label[0] == "ptb" else "red"
+        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+    plt.title("Test dataset")
 
-    # Data visualisation
     plt.figure(2)
+    for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+        color = "blue" if y_label[0] == "ptb" else "red"
+        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+    plt.title("Train dataset")
+
+    plt.figure(3)
     for index, class_y in enumerate(new_y_test):
         color = "blue" if class_y <= 0 else "red"
-        plt.scatter(X_test_SVM[index, 0], X_test_SVM[index, 1], color=color)
+        plt.scatter(X_test_SVM[index, class_no_1-1], X_test_SVM[index, class_no_2-1], color=color)
+    plt.title("Results")
+
     plt.show()
 
-    # # PARAMS
-    # dual_problem = False  # dual=False when n_samples > n_features.
-    # class1 = 1  # only for plotting
-    # class2 = 0  # only for plotting
-    #
-    # LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
-    #           intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-    #           multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-    #           verbose=0)
-    #
-    # new_y = clf.decision_function(X)
-    # print(new_y)
-    #
-    # # PLOTTING
-    # plt.figure(1)
-    # for index, class_y in enumerate(y):
-    #     color = "blue" if class_y == 0 else "red"
-    #     plt.scatter([X[index, class1]], X[index, class2], color=color)
-    #
-    # # PLOTTING
-    # plt.figure(2)
-    # for index, class_y in enumerate(new_y):
-    #     color = "blue" if class_y < 0 else "red"
-    #     plt.scatter([X[index, class1]], X[index, class2], color=color)
-    # plt.show()
 
-
-    # TODO testy NN z obecnym stanem prac
-    # TODO falki
-    # TODO emd
