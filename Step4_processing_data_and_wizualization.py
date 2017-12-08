@@ -105,13 +105,9 @@ if __name__ == "__main__":
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
 
     # TODO Add more features to dataset for classification
-
-
     # TODO Make X dataset for SVM  and SNN
     # TODO Make Y dataset for SVM and SNN
-
     # TODO Test SNN and SVM
-
 
     wavelet = "db6"
     X_test_wavelets_coeffs = np.array(transform_dataset_into_coeffs_dataset(X_test, wavelet=wavelet))
@@ -123,31 +119,38 @@ if __name__ == "__main__":
         plt.scatter(element[0], element[1], color=color)
 
     # SVM
-    X = X_train_wavelets_coeffs[:,0:2]
-    X = X.astype('float')
-    y = [1 if element=="aftdb" else 0 for element in X_train_wavelets_coeffs[:,2]]
+    X_train_SVM = X_train_wavelets_coeffs[:, 0:2]
+    X_train_SVM = X_train_SVM.astype('float')
+    y_train_SVM = [1 if element == "aftdb" else 0 for element in X_train_wavelets_coeffs[:, 2]]
+
+    X_test_SVM = X_test_wavelets_coeffs[:, 0:2]
+    X_test_SVM = X_test_SVM.astype('float')
+    y_test_SVM = [1 if element == "aftdb" else 0 for element in X_test_wavelets_coeffs[:, 2]]
+
+    # TRAIN
     clf = LinearSVC(random_state=0)
-    clf.fit(X, y)
+    clf.fit(X_train_SVM, y_train_SVM)
     dual_problem = False  # dual=False when n_samples > n_features.
     LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
-              intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+              intercept_scaling=1, loss='squared_hinge', max_iter=100000,
               multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
               verbose=0)
 
-    new_y = clf.decision_function(X)
-    new_y = [0 if element < 0 else 1 for element in new_y]
-    print(new_y)
+    # TEST
+    new_y_test = clf.decision_function(X_test_SVM)
+    new_y_test = [0 if element < 0 else 1 for element in new_y_test]
+    print(new_y_test)
 
-    quality = calculate_quality_of_classification(y_real=y, y_predictions=new_y)
+    quality = calculate_quality_of_classification(y_real=y_test_SVM, y_predictions=new_y_test)
     print("Specyficznosc:", quality["specifity"])
     print("Czułość:", quality["sensitivity"])
 
 
     # Data visualisation
     plt.figure(2)
-    for index, class_y in enumerate(new_y):
+    for index, class_y in enumerate(new_y_test):
         color = "blue" if class_y <= 0 else "red"
-        plt.scatter(X[index,0], X[index,1] , color=color)
+        plt.scatter(X_test_SVM[index, 0], X_test_SVM[index, 1], color=color)
     plt.show()
 
     # # PARAMS

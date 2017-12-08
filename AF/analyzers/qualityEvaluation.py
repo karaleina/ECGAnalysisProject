@@ -36,7 +36,8 @@ def calculate_quality_of_classification(y_predictions = [], y_real = []):
     #
     return {"sensitivity": sensitivity, "specifity": specifity}
 
-test = [1, 1, 1, 1, 0, 1, 0]
-real = [0, 0, 0, 1, 0, 1, 0]
+if __name__ == "__main__":
+    test = [1, 1, 1, 1, 0, 1, 0]
+    real = [0, 0, 0, 1, 0, 1, 0]
 
-print(calculate_quality_of_classification(y_real=real, y_predictions=test))
+    print(calculate_quality_of_classification(y_real=real, y_predictions=test))
