@@ -101,23 +101,21 @@ def calculate_emd_and_show(dataset):
 
 if __name__ == "__main__":
 
-    # TODO Test SNN and SVM i klasteryzacji automatycznej K-MEANS
-    # TODO testy NN z obecnym stanem prac
     # TODO Douczanie samych przypadków trudnych:
     #  - z niezgodną przynależnością -  sieć neuronowa
     # - wytypowanie falek do ogolnej klasyfikacji i douczenia przypadkow trudnych
-    # TODO falki
-    # TODO emd
+
+    # TODO FFT dataset
+    # TODO EMD dataset
 
     directory = "database/step3"
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
-    # DMEY, DB6
-    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17")#, "dmey", "haar")
-    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17")#, "dmey", "haar")
+    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17", "dmey", "haar")
+    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17", "dmey", "haar")
 
     # ---------------- Wizualization parameters ----------------------
-    class_no_1 = 1
+    class_no_1 = 3
     class_no_2 = 2
 
     # Datasets
@@ -128,10 +126,14 @@ if __name__ == "__main__":
     X_test_SNN = X_test_SNN.astype('float')
     y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
+    # -------------------------PARAMS------------------------------------
+
     svm_go = False
-    snn_go = False
-    knn_go = True
+    snn_go = True
+    knn_go = False
     data_visualisation = True
+
+    # -------------------------Classification-----------------------------
 
     if svm_go is True:
         # ---------------------------- SVM -------------------------------------
@@ -207,10 +209,9 @@ if __name__ == "__main__":
 
             plt.show()
 
-
     if snn_go is True:
     #----------------------------SNN--------------------------------------
-        nn = SNN.NeuralNetwork([4, 12, 1])
+        nn = SNN.NeuralNetwork([8, 16, 1])
         nn.fit(X_train_SNN, y_train_SNN)
         predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
 
@@ -238,26 +239,6 @@ if __name__ == "__main__":
             plt.title("Results")
 
             plt.show()
-
-
-
-    # # Building a neural network
-    # hdim = 25
-    # inputs = len(X_train_SNN[0,:])
-    # model = build_model(nn_input_dim=inputs, nn_hdim=hdim, nn_output_dim=2,
-    #                     X=X_train_SNN, y=y_train_SNN, num_examples=len(X_train_SNN),
-    #                     reg_lambda=0.01, epsilon=0.01,
-    #                     num_passes=2000000)
-    #
-    # print("Otrzymany model SNN: ", model)
-    #
-    # predictions = predict(model, X_test_SNN)
-    # difference = np.array(predictions) - np.array(y_test_SNN)
-    # bad_classified = [i for i, x in enumerate(difference) if x != 0]
-    #
-    # # other idea : MLP scikit : https://www.kdnuggets.com/2016/10/beginners-guide-neural-networks-python-scikit-learn.html/2
-    # # http://scikit-learn.org/stable/modules/neural_networks_supervised.html
-
 
 
 
