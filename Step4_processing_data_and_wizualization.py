@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from PyEMD import EMD
 from sklearn.svm import LinearSVC
+from AF import knn_algorithm
 
 
 
@@ -128,8 +129,8 @@ if __name__ == "__main__":
     y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
     svm_go = False
-    snn_go = True
-    knn_go = False
+    snn_go = False
+    knn_go = True
     data_visualisation = True
 
     if svm_go is True:
@@ -175,7 +176,37 @@ if __name__ == "__main__":
 
     if knn_go is True:
     # --------------------------K-NN Klasyfikacja------------------------
-        pass
+        predicted_y_test = []
+        for x_test_instance in X_test_SNN:
+            neighbours = knn_algorithm.getNeighbours(X_train_SNN, y_train_SNN, x_test_instance, k=1)
+            predicted_y_value = knn_algorithm.getPrediction(neighbours, weighted_prediction=True)
+            predicted_y_test.append(1) if predicted_y_value > 0.5 else predicted_y_test.append(0)
+
+        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
+        print("Specyficznosc:", quality["specifity"])
+        print("Czułość:", quality["sensitivity"])
+
+        if data_visualisation is True:
+            # -------------- Data visualisation ---------------------------------
+            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Test dataset")
+
+            plt.figure(2)
+            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Train dataset")
+
+            plt.figure(3)
+            for index, class_y in enumerate(predicted_y_test):
+                color = "blue" if class_y <= 0 else "red"
+                plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color)
+            plt.title("Results")
+
+            plt.show()
+
 
     if snn_go is True:
     #----------------------------SNN--------------------------------------
