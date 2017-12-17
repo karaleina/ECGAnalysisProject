@@ -2,10 +2,13 @@ from Step2_reading_and_correcting import read_with_pickle
 from AF.tools.pca_tools import PCADimensionAnalyser
 from AF.simple_medical_analysers.wavelet_analysis import DWTWaveletAnalyser
 from AF.analyzers.qualityEvaluation import calculate_quality_of_classification
+from neural_model_functions.simple_neural_models import plot_decision_boundary, build_model, predict
+from neural_model_functions import SNN
 from matplotlib import pyplot as plt
 import numpy as np
 from PyEMD import EMD
 from sklearn.svm import LinearSVC
+
 
 
 def transform_dataset_into_pcas_datasets(dataset):
@@ -109,58 +112,121 @@ if __name__ == "__main__":
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
     # DMEY, DB6
-    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17", "dmey", "haar")
-    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17", "dmey", "haar")
+    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17")#, "dmey", "haar")
+    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17")#, "dmey", "haar")
 
-    # ---- Wizualization parameters -----
+    # ---------------- Wizualization parameters ----------------------
     class_no_1 = 1
     class_no_2 = 2
 
-    # ----------------- SVM ---------------------
     # Datasets
-    X_train_SVM = X_train_wavelets_coeffs
-    X_train_SVM = X_train_SVM.astype('float')
-    y_train_SVM = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:,0]]
-    X_test_SVM = X_test_wavelets_coeffs
-    X_test_SVM = X_test_SVM.astype('float')
-    y_test_SVM = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:,0]]
+    X_train_SNN = X_train_wavelets_coeffs
+    X_train_SNN = X_train_SNN.astype('float')
+    y_train_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:, 0]]
+    X_test_SNN = X_test_wavelets_coeffs
+    X_test_SNN = X_test_SNN.astype('float')
+    y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
-    # Training
-    clf = LinearSVC(random_state=0)
-    clf.fit(X_train_SVM, y_train_SVM)
-    dual_problem = False  # dual=False when n_samples > n_features.
-    LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
-              intercept_scaling=1, loss='squared_hinge', max_iter=100000,
-              multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-              verbose=0)
+    svm_go = False
+    snn_go = True
+    knn_go = False
+    data_visualisation = True
 
-    # Testing
-    new_y_test = clf.decision_function(X_test_SVM)
-    new_y_test = [0 if element < 0 else 1 for element in new_y_test]
-    print(new_y_test)
+    if svm_go is True:
+        # ---------------------------- SVM -------------------------------------
+        # Training
+        clf = LinearSVC(random_state=0)
+        clf.fit(X_train_SNN, y_train_SNN)
+        dual_problem = False  # dual=False when n_samples > n_features.
+        LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
+                  intercept_scaling=1, loss='squared_hinge', max_iter=100000,
+                  multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+                  verbose=0)
 
-    quality = calculate_quality_of_classification(y_real=y_test_SVM, y_predictions=new_y_test)
-    print("Specyficznosc:", quality["specifity"])
-    print("Czułość:", quality["sensitivity"])
+        # Testing
+        predicted_y_test = clf.decision_function(X_test_SNN)
+        predicted_y_test = [0 if element < 0 else 1 for element in predicted_y_test]
+        print(predicted_y_test)
 
-    # -------------- Data visualisation ---------------------------------
-    for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
-        color = "blue" if y_label[0] == "ptb" else "red"
-        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
-    plt.title("Test dataset")
+        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
+        print("Specyficznosc:", quality["specifity"])
+        print("Czułość:", quality["sensitivity"])
 
-    plt.figure(2)
-    for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
-        color = "blue" if y_label[0] == "ptb" else "red"
-        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
-    plt.title("Train dataset")
+        if data_visualisation is True:
+            # -------------- Data visualisation ---------------------------------
+            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Test dataset")
 
-    plt.figure(3)
-    for index, class_y in enumerate(new_y_test):
-        color = "blue" if class_y <= 0 else "red"
-        plt.scatter(X_test_SVM[index, class_no_1-1], X_test_SVM[index, class_no_2-1], color=color)
-    plt.title("Results")
+            plt.figure(2)
+            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Train dataset")
 
-    plt.show()
+            plt.figure(3)
+            for index, class_y in enumerate(predicted_y_test):
+                color = "blue" if class_y <= 0 else "red"
+                plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color)
+            plt.title("Results")
+
+            plt.show()
+
+    if knn_go is True:
+    # --------------------------K-NN Klasyfikacja------------------------
+        pass
+
+    if snn_go is True:
+    #----------------------------SNN--------------------------------------
+        nn = SNN.NeuralNetwork([4, 12, 1])
+        nn.fit(X_train_SNN, y_train_SNN)
+        predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
+
+        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
+        print("Specyficznosc:", quality["specifity"])
+        print("Czułość:", quality["sensitivity"])
+
+        if data_visualisation is True:
+            # -------------- Data visualisation ---------------------------------
+            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Test dataset")
+
+            plt.figure(2)
+            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+                color = "blue" if y_label[0] == "ptb" else "red"
+                plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
+            plt.title("Train dataset")
+
+            plt.figure(3)
+            for index, class_y in enumerate(predicted_y_test):
+                color = "blue" if class_y <= 0 else "red"
+                plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color)
+            plt.title("Results")
+
+            plt.show()
+
+
+
+    # # Building a neural network
+    # hdim = 25
+    # inputs = len(X_train_SNN[0,:])
+    # model = build_model(nn_input_dim=inputs, nn_hdim=hdim, nn_output_dim=2,
+    #                     X=X_train_SNN, y=y_train_SNN, num_examples=len(X_train_SNN),
+    #                     reg_lambda=0.01, epsilon=0.01,
+    #                     num_passes=2000000)
+    #
+    # print("Otrzymany model SNN: ", model)
+    #
+    # predictions = predict(model, X_test_SNN)
+    # difference = np.array(predictions) - np.array(y_test_SNN)
+    # bad_classified = [i for i, x in enumerate(difference) if x != 0]
+    #
+    # # other idea : MLP scikit : https://www.kdnuggets.com/2016/10/beginners-guide-neural-networks-python-scikit-learn.html/2
+    # # http://scikit-learn.org/stable/modules/neural_networks_supervised.html
+
+
 
 
