@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from PyEMD import EMD
 from sklearn.svm import LinearSVC
-from AF import knn_algorithm
+from AF import knn_algorithm, fft_module
 
 
 
@@ -63,6 +63,32 @@ def transform_dataset_into_coeffs_dataset(dataset, *wavelets_names):
     return np.array(X_coeffs_dataset), np.array(y_info_dataset)
 
 
+def transform_dataset_into_fft_power_dataset(dataset, T_sampling, f_min, f_max):
+    X_fft_dataset = []
+    y_info_dataset = []
+
+    for patient in dataset:
+        list_rr_channel0 = dataset[patient]["channel0"]
+        list_rr_channel1 = dataset[patient]["channel1"]
+        diagnose = dataset[patient]["diagnose"]
+        dataset[patient]["coeffs"] = np.empty((len(list_rr_channel0),2))
+
+        for index in range(len(list_rr_channel0)):
+            signal0 = list_rr_channel0[index].get_signal()
+            signal1 = list_rr_channel1[index].get_signal()
+            record_data = []
+
+            # FFT
+            coeff_fft0_normed = fft_module.FFT_analyser.get_fft_coeff(signal0, T_sampling=T_sampling, f_min=f_min, f_max=f_max)
+            coeff_fft1_normed = fft_module.FFT_analyser.get_fft_coeff(signal1, T_sampling=T_sampling, f_min=f_min, f_max=f_max)
+            record_data.extend((coeff_fft0_normed, coeff_fft1_normed))
+
+            # Updating
+            y_info_dataset.append([diagnose, patient])
+            X_fft_dataset.append(record_data)
+    return np.array(X_fft_dataset), np.array(y_info_dataset)
+
+
 def calculate_emd_and_show(dataset):
     dictionary = {"aftdb": {"var":[],
                           "std":[]},
@@ -105,33 +131,52 @@ if __name__ == "__main__":
     #  - z niezgodną przynależnością -  sieć neuronowa
     # - wytypowanie falek do ogolnej klasyfikacji i douczenia przypadkow trudnych
 
-    # TODO FFT dataset
+    # TODO Saving SNN, SVM, (k-means?) results weights
     # TODO EMD dataset
-
-    directory = "database/step3"
-    X_test = read_with_pickle(directory + "/" + "X_test.pkl")
-    X_train = read_with_pickle(directory + "/" + "X_train.pkl")
-    X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17", "dmey", "haar")
-    X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17", "dmey", "haar")
-
-    # ---------------- Wizualization parameters ----------------------
-    class_no_1 = 3
-    class_no_2 = 2
-
-    # Datasets
-    X_train_SNN = X_train_wavelets_coeffs
-    X_train_SNN = X_train_SNN.astype('float')
-    y_train_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:, 0]]
-    X_test_SNN = X_test_wavelets_coeffs
-    X_test_SNN = X_test_SNN.astype('float')
-    y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
+    # TODO ROC Curves
 
     # -------------------------PARAMS------------------------------------
+    dataset_type = "fft" #""wavelets"# "wavelets" # "fft"
 
     svm_go = False
     snn_go = True
     knn_go = False
+
+    # ---------------- Wizualization parameters ----------------------
     data_visualisation = True
+    class_no_1 = 1
+    class_no_2 = 2
+
+    # -----------------------CREATING DATASET---------------------------------------
+    directory = "database/step3"
+    X_test = read_with_pickle(directory + "/" + "X_test.pkl")
+    X_train = read_with_pickle(directory + "/" + "X_train.pkl")
+
+    # ---------------------------WAVELET-DATASET----------------------------
+    if dataset_type == "wavelets":
+        X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17")#, "dmey", "haar")
+        X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17")#, "dmey", "haar")
+
+        # Datasets
+        X_train_SNN = X_train_wavelets_coeffs
+        X_train_SNN = X_train_SNN.astype('float')
+        y_train_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:, 0]]
+        X_test_SNN = X_test_wavelets_coeffs
+        X_test_SNN = X_test_SNN.astype('float')
+        y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
+
+    # --------------------------FFT-DATASET---------------------------------
+    if dataset_type == "fft":
+        X_test_fft_coeffs, y_test_info = transform_dataset_into_fft_power_dataset(X_test, T_sampling=1/128, f_min=6, f_max=10)
+        X_train_fft_coeffs, y_train_info = transform_dataset_into_fft_power_dataset(X_train, T_sampling=1/128, f_min=6, f_max=10)
+
+        # Datasets
+        X_train_SNN = X_train_fft_coeffs
+        X_train_SNN = X_train_SNN.astype('float')
+        y_train_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_train_info[:, 0]]
+        X_test_SNN = X_test_fft_coeffs
+        X_test_SNN = X_test_SNN.astype('float')
+        y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
     # -------------------------Classification-----------------------------
 
@@ -157,13 +202,13 @@ if __name__ == "__main__":
 
         if data_visualisation is True:
             # -------------- Data visualisation ---------------------------------
-            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+            for element, y_label in zip(X_test_SNN, y_test_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Test dataset")
 
             plt.figure(2)
-            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+            for element, y_label in zip(X_train_SNN, y_train_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Train dataset")
@@ -180,7 +225,7 @@ if __name__ == "__main__":
     # --------------------------K-NN Klasyfikacja------------------------
         predicted_y_test = []
         for x_test_instance in X_test_SNN:
-            neighbours = knn_algorithm.getNeighbours(X_train_SNN, y_train_SNN, x_test_instance, k=1)
+            neighbours = knn_algorithm.getNeighbours(X_train_SNN, y_train_SNN, x_test_instance, k=5)
             predicted_y_value = knn_algorithm.getPrediction(neighbours, weighted_prediction=True)
             predicted_y_test.append(1) if predicted_y_value > 0.5 else predicted_y_test.append(0)
 
@@ -190,13 +235,13 @@ if __name__ == "__main__":
 
         if data_visualisation is True:
             # -------------- Data visualisation ---------------------------------
-            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+            for element, y_label in zip(X_test_SNN, y_test_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Test dataset")
 
             plt.figure(2)
-            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+            for element, y_label in zip(X_train_SNN, y_train_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Train dataset")
@@ -211,7 +256,7 @@ if __name__ == "__main__":
 
     if snn_go is True:
     #----------------------------SNN--------------------------------------
-        nn = SNN.NeuralNetwork([8, 16, 1])
+        nn = SNN.NeuralNetwork([2, 16, 1])
         nn.fit(X_train_SNN, y_train_SNN)
         predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
 
@@ -221,13 +266,13 @@ if __name__ == "__main__":
 
         if data_visualisation is True:
             # -------------- Data visualisation ---------------------------------
-            for element, y_label in zip(X_test_wavelets_coeffs, y_test_info):
+            for element, y_label in zip(X_test_SNN, y_test_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Test dataset")
 
             plt.figure(2)
-            for element, y_label in zip(X_train_wavelets_coeffs, y_train_info):
+            for element, y_label in zip(X_train_SNN, y_train_info):
                 color = "blue" if y_label[0] == "ptb" else "red"
                 plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
             plt.title("Train dataset")
