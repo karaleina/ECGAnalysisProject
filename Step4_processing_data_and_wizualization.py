@@ -11,6 +11,26 @@ from sklearn.svm import LinearSVC
 from AF import knn_algorithm, fft_module
 
 
+# TODO 
+def calculate_ROC_params(predicted_y_test_without_class, y_real, min_threshold, max_threshold, number_of_samples, plotting=True):
+    thresholds = np.linspace(start=min_threshold, stop=max_threshold, num=number_of_samples)
+    sensitivities = np.empty_like(thresholds)
+    specifities = np.empty_like(thresholds)
+
+    for index_thresh, threshold in enumerate(thresholds):
+        predicted_y_test_classified = [0 if element < threshold else 1 for element in predicted_y_test_without_class]
+        quality = calculate_quality_of_classification(y_real=y_real, y_predictions=predicted_y_test_classified)
+        specifities[index_thresh] = quality["specifity"]
+        sensitivities[index_thresh] = quality["sensitivity"]
+
+    if plotting is True:
+        plt.plot(1-specifities, sensitivities, "-o")
+        plt.axis([0, 1, 0, 1])
+        plt.ylabel("sensitivity")
+        plt.xlabel("1-specifity")
+        plt.grid()
+        plt.show()
+
 
 def transform_dataset_into_pcas_datasets(dataset):
     new_dataset = dataset.copy()
@@ -139,8 +159,8 @@ if __name__ == "__main__":
     dataset_type = "fft" #""wavelets"# "wavelets" # "fft"
 
     svm_go = False
-    snn_go = True
-    knn_go = False
+    snn_go = False
+    knn_go = True
 
     # ---------------- Wizualization parameters ----------------------
     data_visualisation = True
@@ -179,26 +199,32 @@ if __name__ == "__main__":
         y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
     # -------------------------Classification-----------------------------
-
     if svm_go is True:
         # ---------------------------- SVM -------------------------------------
         # Training
-        clf = LinearSVC(random_state=0)
-        clf.fit(X_train_SNN, y_train_SNN)
+        # clf = LinearSVC(random_state=0)
+        #
         dual_problem = False  # dual=False when n_samples > n_features.
-        LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
+        clf = LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
                   intercept_scaling=1, loss='squared_hinge', max_iter=100000,
                   multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
                   verbose=0)
+        clf.fit(X_train_SNN, y_train_SNN)
+
 
         # Testing
         predicted_y_test = clf.decision_function(X_test_SNN)
-        predicted_y_test = [0 if element < 0 else 1 for element in predicted_y_test]
-        print(predicted_y_test)
 
-        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
-        print("Specyficznosc:", quality["specifity"])
-        print("Czułość:", quality["sensitivity"])
+
+        # ROC
+        calculate_ROC_params(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-2,
+                             max_threshold=2, number_of_samples=2000)
+        # predicted_y_test = [0 if element < 0 else 1 for element in predicted_y_test]
+        # print(predicted_y_test)
+        # Quality
+        # quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
+        # print("Specyficznosc:", quality["specifity"])
+        # print("Czułość:", quality["sensitivity"])
 
         if data_visualisation is True:
             # -------------- Data visualisation ---------------------------------
@@ -224,10 +250,15 @@ if __name__ == "__main__":
     if knn_go is True:
     # --------------------------K-NN Klasyfikacja------------------------
         predicted_y_test = []
+        predicted_y_values = []
         for x_test_instance in X_test_SNN:
             neighbours = knn_algorithm.getNeighbours(X_train_SNN, y_train_SNN, x_test_instance, k=5)
             predicted_y_value = knn_algorithm.getPrediction(neighbours, weighted_prediction=True)
+            predicted_y_values.append(predicted_y_value)
             predicted_y_test.append(1) if predicted_y_value > 0.5 else predicted_y_test.append(0)
+
+        calculate_ROC_params(predicted_y_test_without_class=predicted_y_values, y_real=y_test_SNN, min_threshold=-2,
+                             max_threshold=2, number_of_samples=50)
 
         quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
         print("Specyficznosc:", quality["specifity"])
@@ -258,11 +289,17 @@ if __name__ == "__main__":
     #----------------------------SNN--------------------------------------
         nn = SNN.NeuralNetwork([2, 16, 1])
         nn.fit(X_train_SNN, y_train_SNN)
-        predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
+        predicted_y_test = [nn.predict(e) for e in X_test_SNN]
 
-        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
-        print("Specyficznosc:", quality["specifity"])
-        print("Czułość:", quality["sensitivity"])
+
+        # ROC
+        calculate_ROC_params(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
+                             max_threshold=1, number_of_samples=2000)
+
+        # predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
+        # quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
+        # print("Specyficznosc:", quality["specifity"])
+        # print("Czułość:", quality["sensitivity"])
 
         if data_visualisation is True:
             # -------------- Data visualisation ---------------------------------
