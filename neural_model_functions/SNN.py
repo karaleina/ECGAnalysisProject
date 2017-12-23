@@ -33,10 +33,14 @@ class NeuralNetwork:
         # input and hidden layers - random((2+1, 2+1)) : 3 x 3
         for i in range(1, len(layers) - 1):
             r = 2 * np.random.random((layers[i - 1] + 1, layers[i] + 1)) - 1
+            # HIDDEN LAYER
             self.weights.append(r)
+            print(self.weights)
         # output layer - random((2+1, 1)) : 3 x 1
         r = 2 * np.random.random((layers[i] + 1, layers[i + 1])) - 1
+        # OUTPUT LAYER
         self.weights.append(r)
+        print(self.weights)
 
     def fit(self, X, y, learning_rate=0.2, epochs=100000):
         # Add column of ones to X

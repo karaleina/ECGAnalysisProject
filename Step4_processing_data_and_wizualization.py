@@ -58,7 +58,7 @@ def transform_dataset_into_pcas_datasets(dataset):
     return new_dataset
 
 
-def transform_dataset_into_coeffs_dataset(dataset, *wavelets_names):
+def transform_dataset_into_coeffs_dataset(dataset, list_of_wavelets):
     X_coeffs_dataset = []
     y_info_dataset = []
 
@@ -71,7 +71,7 @@ def transform_dataset_into_coeffs_dataset(dataset, *wavelets_names):
             signal0 = list_rr_channel0[index].get_signal()
             signal1 = list_rr_channel1[index].get_signal()
             record_data = []
-            for wavelet in wavelets_names:
+            for wavelet in list_of_wavelets:
                 # Calculate coeffs
                 dwt_a = DWTWaveletAnalyser()
                 norm_coeff0 = dwt_a.get_wavelet_af_energy(signal0, frequency=128, wavelet=wavelet)
@@ -145,22 +145,19 @@ def calculate_emd_and_show(dataset):
                 break
 
 
-if __name__ == "__main__":
-
+def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
+         number_of_hidden_neurons=None, list_of_wavelets=None):
     # TODO Douczanie samych przypadków trudnych:
     #  - z niezgodną przynależnością -  sieć neuronowa
     # - wytypowanie falek do ogolnej klasyfikacji i douczenia przypadkow trudnych
 
     # TODO Saving SNN, SVM, (k-means?) results weights
     # TODO EMD dataset
-    # TODO ROC Curves
 
     # -------------------------PARAMS------------------------------------
-    dataset_type = "fft" #""wavelets"# "wavelets" # "fft"
+      # ""wavelets"# "wavelets" # "fft"
 
-    svm_go = False
-    snn_go = False
-    knn_go = True
+
 
     # ---------------- Wizualization parameters ----------------------
     data_visualisation = True
@@ -174,8 +171,8 @@ if __name__ == "__main__":
 
     # ---------------------------WAVELET-DATASET----------------------------
     if dataset_type == "wavelets":
-        X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, "db6", "db17")#, "dmey", "haar")
-        X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, "db6", "db17")#, "dmey", "haar")
+        X_test_wavelets_coeffs, y_test_info = transform_dataset_into_coeffs_dataset(X_test, list_of_wavelets)  # , "dmey", "haar")
+        X_train_wavelets_coeffs, y_train_info = transform_dataset_into_coeffs_dataset(X_train, list_of_wavelets)  # , "dmey", "haar")
 
         # Datasets
         X_train_SNN = X_train_wavelets_coeffs
@@ -187,8 +184,10 @@ if __name__ == "__main__":
 
     # --------------------------FFT-DATASET---------------------------------
     if dataset_type == "fft":
-        X_test_fft_coeffs, y_test_info = transform_dataset_into_fft_power_dataset(X_test, T_sampling=1/128, f_min=6, f_max=10)
-        X_train_fft_coeffs, y_train_info = transform_dataset_into_fft_power_dataset(X_train, T_sampling=1/128, f_min=6, f_max=10)
+        X_test_fft_coeffs, y_test_info = transform_dataset_into_fft_power_dataset(X_test, T_sampling=1 / 128, f_min=6,
+                                                                                  f_max=10)
+        X_train_fft_coeffs, y_train_info = transform_dataset_into_fft_power_dataset(X_train, T_sampling=1 / 128,
+                                                                                    f_min=6, f_max=10)
 
         # Datasets
         X_train_SNN = X_train_fft_coeffs
@@ -206,15 +205,13 @@ if __name__ == "__main__":
         #
         dual_problem = False  # dual=False when n_samples > n_features.
         clf = LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
-                  intercept_scaling=1, loss='squared_hinge', max_iter=100000,
-                  multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-                  verbose=0)
+                        intercept_scaling=1, loss='squared_hinge', max_iter=100000,
+                        multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+                        verbose=0)
         clf.fit(X_train_SNN, y_train_SNN)
-
 
         # Testing
         predicted_y_test = clf.decision_function(X_test_SNN)
-
 
         # ROC
         calculate_ROC_params(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-2,
@@ -248,7 +245,7 @@ if __name__ == "__main__":
             plt.show()
 
     if knn_go is True:
-    # --------------------------K-NN Klasyfikacja------------------------
+        # --------------------------K-NN Klasyfikacja------------------------
         predicted_y_test = []
         predicted_y_values = []
         for x_test_instance in X_test_SNN:
@@ -286,11 +283,11 @@ if __name__ == "__main__":
             plt.show()
 
     if snn_go is True:
-    #----------------------------SNN--------------------------------------
-        nn = SNN.NeuralNetwork([2, 16, 1])
+        # ----------------------------SNN--------------------------------------
+        number_of_input_neurons = len(X_train_SNN[0])
+        nn = SNN.NeuralNetwork([number_of_input_neurons, number_of_hidden_neurons, 1])
         nn.fit(X_train_SNN, y_train_SNN)
         predicted_y_test = [nn.predict(e) for e in X_test_SNN]
-
 
         # ROC
         calculate_ROC_params(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
@@ -321,6 +318,12 @@ if __name__ == "__main__":
             plt.title("Results")
 
             plt.show()
+
+if __name__ == "__main__":
+
+    list_of_wavelets = ["db6"]
+    main(dataset_type="wavelets", svm_go=False, snn_go=True, knn_go=False,
+         number_of_hidden_neurons=9, list_of_wavelets=list_of_wavelets)
 
 
 
