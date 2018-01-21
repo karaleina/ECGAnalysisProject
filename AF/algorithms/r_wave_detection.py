@@ -59,7 +59,7 @@ class Hamilton(object):
     def name(self):
         return "Hamilton"
 
-    def detect_r_waves(self, channel, sampling_rate=250):
+    def detect_r_waves(self, channel, sampling_rate=128):
         return np.array(ecg.hamilton_segmenter(np.array(channel), sampling_rate=sampling_rate))[0]
 
 

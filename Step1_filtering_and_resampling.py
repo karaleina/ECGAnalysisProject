@@ -24,7 +24,7 @@ def antyaliasing_filtration_from_1000_to_128(signal, wavelet = "db6"):
 
     (cA, cD) = pywt.dwt(signal, wavelet) # 250 Hz
     (cA2, cD2) = pywt.dwt(cA, wavelet) # 125 Hz
-    (cA3, cD3) = pywt.dwt(cA2, wavelet) # 63 Hz
+    (cA3, cD3) = pywt.dwt(cA2, wavelet) # 62.5 Hz
 
     cD = np.zeros(len(cD))
     cD2 = np.zeros(len(cD2))
@@ -57,6 +57,9 @@ with open("downloads/af_term/aftdb_record_names") as patients_list:
             combined_rr = rr_detector.compare(signals=signals[:, 0:2], sampling_ratio=128)
             rr_ia = RRIntervalsAnalyser.RRIntervalsAnalyser(sampling_ratio=128, signals=signals[:,0:2])
 
+
+            a = rr_ia.get_intervals(combined_rr, channel_no=0,
+                                                                                time_margin=0.1)
             list_of_intervals_chann0, rr_distances_chann0 = rr_ia.get_intervals(combined_rr, channel_no=0,
                                                                                 time_margin=0.1)
             list_of_intervals_chann1, rr_distances_chann1 = rr_ia.get_intervals(combined_rr, channel_no=1,
@@ -118,7 +121,7 @@ with open("downloads/ptb/patients.txt") as patients_list:
 
         # GETTING RR INTERVALS
         rr_detector = bothChannelsQRSDetector.BothChannelsQRSDetector()
-        combined_rr = rr_detector.compare(signals=dataset, sampling_ratio=128)
+        combined_rr = rr_detector.compare(signals=dataset, tol_compare_time=0.1, sampling_ratio=128)
         rr_ia = RRIntervalsAnalyser.RRIntervalsAnalyser(sampling_ratio=128, signals=dataset[:, 0:2])
 
         list_of_intervals_chann0, rr_distances_chann0 = rr_ia.get_intervals(combined_rr, channel_no=0,

@@ -14,7 +14,7 @@ class DWTWaveletAnalyser(object):
         return np.sum(np.power(np.absolute(coeff),2))
 
     @staticmethod
-    def get_wavelet_af_energy(signal, wavelet="db2", frequency=None):
+    def get_wavelet_af_energy(signal, wavelet, frequency=None):
         if frequency == 128:
             (cA1, cD1) = pywt.dwt(signal, wavelet)
             (cA2, cD2) = pywt.dwt(cA1, wavelet)
@@ -32,13 +32,6 @@ class DWTWaveletAnalyser(object):
                 coeffs_of_interest += list(a)
 
             normed_coeff_energy = DWTWaveletAnalyser.__calculate_signal_energy(coeffs_of_interest)/DWTWaveletAnalyser.__calculate_signal_energy(coeffs_with_all_energy)
-            # if 0 <= normed_coeff_energy <= 1:
-            #     return normed_coeff_energy
-            #
-            # else:
-            #     print(len(signal))
-            #     print("Normed coeff out of range")
-            #     raise Exception
             return normed_coeff_energy
         else:
             print("Method for this sampling frequency is not implemented")

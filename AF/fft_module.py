@@ -17,16 +17,11 @@ class FFT_analyser(object):
     @staticmethod
     def count_fft(signal, T_sampling):
         new_y = signal.ravel()
-
-        # FFT
         N = len(new_y)
-
         yf = fft(new_y)
         xf = np.linspace(0.0, 1.0 / (2 * T_sampling), N // 2)
-
         yf = yf * 1.0 / len(yf) # normalized
         yf_abs = np.abs(yf[0:len(yf) // 2])
-
         return [xf, yf_abs]
 
     @staticmethod
