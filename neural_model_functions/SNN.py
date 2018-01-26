@@ -42,7 +42,7 @@ class NeuralNetwork:
         self.__weights.append(r)
         print(self.__weights)
 
-    def fit(self, X, y, learning_rate=0.1, epochs=1000000):
+    def fit(self, X, y, learning_rate=0.05, epochs=500000):
         # Add column of ones to X
         # This is to add the bias unit to the input layer
         ones = np.atleast_2d(np.ones(X.shape[0]))

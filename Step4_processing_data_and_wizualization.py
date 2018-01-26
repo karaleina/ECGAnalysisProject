@@ -47,10 +47,10 @@ def calculate_ROC_curve(predicted_y_test_without_class, y_real, min_threshold, m
         plt.plot(1-specifities, sensitivities, "-bo")
         plt.plot([0, 1], [0, 1], "m")
         plt.axis([0, 1, 0, 1])
-        plt.ylabel("sensitivity")
-        plt.xlabel("1-specifity")
+        plt.ylabel("sensitivity", fontweight="bold")
+        plt.xlabel("1-specifity", fontweight="bold")
+        plt.title("ROC curve", fontweight="bold")
         plt.grid()
-        #plt.show()
 
     return sensitivities, 1-specifities
 
@@ -107,7 +107,7 @@ def transform_dataset_into_fft_power_dataset(dataset, T_sampling, f_min, f_max):
 
 
 def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
-         number_of_hidden_neurons=None, list_of_wavelets=None, k_neighbors=5, k_neighbors_list=[1]):
+         number_of_hidden_neurons=None, list_of_wavelets=None, k_neighbors=5, k_neighbors_list=[1], list_of_hidden_neurons=[6]):
     # TODO Douczanie samych przypadków trudnych:
     #  - z niezgodną przynależnością -  sieć neuronowa
     # - wytypowanie falek do ogolnej klasyfikacji i douczenia przypadkow trudnych
@@ -168,7 +168,7 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         #
         dual_problem = False  # dual=False when n_samples > n_features.
         clf = LinearSVC(C=1.0, class_weight=None, dual=dual_problem, fit_intercept=True,
-                        intercept_scaling=1, loss='squared_hinge', max_iter=100000,
+                        intercept_scaling=1, loss='squared_hinge', max_iter=10000000,
                         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
                         verbose=0)
         clf.fit(X_train_SNN, y_train_SNN)
@@ -235,20 +235,40 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
             data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
 
     if snn_go is True:
-        # ----------------------------SNN--------------------------------------
-        number_of_input_neurons = len(X_train_SNN[0])
-        nn = SNN.NeuralNetwork([number_of_input_neurons, number_of_hidden_neurons, 1])
-        nn.fit(X_train_SNN, y_train_SNN)
-        predicted_y_test = [nn.predict(e).ravel() for e in X_test_SNN]
 
-        # ROC
-        calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
-                            max_threshold=1, number_of_samples=2000)
+        sensitivities = []
+        one_minus_specifities = []
 
-        predicted_y_test = [1 if nn.predict(e) > 0.5 else 0 for e in X_test_SNN]
-        quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
-        print("Specyficznosc:", quality["specifity"])
-        print("Czułość:", quality["sensitivity"])
+        for hidden_neuron in list_of_hidden_neurons:
+            # ----------------------------SNN--------------------------------------
+            number_of_input_neurons = len(X_train_SNN[0])
+            nn = SNN.NeuralNetwork([number_of_input_neurons, int(hidden_neuron), 1])
+            nn.fit(X_train_SNN, y_train_SNN)
+            predicted_y_test = [nn.predict(e).ravel() for e in X_test_SNN]
+
+            # ROC
+            sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
+                                max_threshold=1, number_of_samples=2000)
+
+            predicted_y_values = []
+            predicted_y_test = []
+
+            sensitivities.append(sens)
+            one_minus_specifities.append(one_minus_spec)
+
+        plt.figure(1)
+
+        for index in range(len(list_of_hidden_neurons)):
+            plt.plot(one_minus_specifities[index], sensitivities[index], "-o", label="hidden neurons=" + str(int(list_of_hidden_neurons[index])))
+            plt.legend()
+
+        plt.plot([0, 1], [0, 1], "m")
+        plt.axis([0, 1, 0, 1])
+        plt.ylabel("sensitivity", fontweight="bold")
+        plt.xlabel("1-specifity", fontweight="bold")
+        plt.title("ROC curve", fontweight="bold")
+        plt.grid()
+        plt.show()
 
         if data_visualisation is True:
             data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
@@ -257,11 +277,12 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
 
 if __name__ == "__main__":
 
-    list_of_wavelets = ["haar"]
+    list_of_wavelets = ["sym6", "db9", "coif10"]
 
     X_train_SNN, X_test_SNN, y_train_SNN, y_test_SNN = main(
-        dataset_type="wavelets", svm_go=False, snn_go=False, knn_go=True,
-         number_of_hidden_neurons=17, list_of_wavelets=list_of_wavelets, k_neighbors_list=[3,5,7,9,11,13,15,17,21,37,101])
+        dataset_type="wavelets", svm_go=True, snn_go=False, knn_go=False,
+         number_of_hidden_neurons=17, list_of_wavelets=list_of_wavelets,
+        k_neighbors_list=[3,5,7,9,11,13,15,17,21,37,101], list_of_hidden_neurons=list(range(2,20,2)))
 
     class_no_1 = 1
     class_no_2 = 2
