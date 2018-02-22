@@ -1,37 +1,72 @@
-from Step2_reading_and_correcting import read_with_pickle
+from Step2_reading_and_correcting import read_with_pickle, save_with_pickle
 from AF.simple_medical_analysers.wavelet_analysis import DWTWaveletAnalyser
 from AF import knn_algorithm, fft_module
 from AF.analyzers.qualityEvaluation import calculate_quality_of_classification
 from neural_model_functions import SNN
 from matplotlib import pyplot as plt
+import os
+import matplotlib
 import numpy as np
 from sklearn.svm import LinearSVC
+from collections import OrderedDict
 
-def data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN, class_no_1=1, class_no_2=2):
+
+def data_visuatlizate(X_test_SNN, y_test_info, y_train_info, X_train_SNN,  predicted_y_test=[], class_no_1=1, class_no_2=2):
     # -------------- Data visualisation ---------------------------------
+
     plt.figure(4)
     for element, y_label in zip(X_test_SNN, y_test_info):
         color = "blue" if y_label[0] == "ptb" else "red"
-        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
-    plt.title("Test dataset")
+        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color, label=y_label[0])
+
+
+
+    plt.title("Test dataset", fontweight="bold", fontsize="14")
+    plt.grid()
+    plt.xlabel("coeff_1", fontweight="bold", fontsize="14" )
+    plt.ylabel("coeff_2", fontweight="bold", fontsize="14")
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
 
     plt.figure(2)
     for element, y_label in zip(X_train_SNN, y_train_info):
-        color = "blue" if y_label[0] == "ptb" else "red"
-        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)
-    plt.title("Train dataset")
+        color = "blue" if y_label[0]== "ptb" else "red"
+        plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color, label=y_label[0])
 
-    plt.figure(3)
-    for index, class_y in enumerate(predicted_y_test):
-        color = "blue" if class_y <= 0 else "red"
-        plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color)
-    plt.title("Results")
+
+    plt.title("Train dataset", fontweight="bold", fontsize="14")
+    plt.grid()
+    plt.xlabel("coeff_1", fontweight="bold", fontsize="14")
+    plt.ylabel("coeff_2", fontweight="bold", fontsize="14")
+
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
+
+
+
+
+    if len(predicted_y_test) > 0:
+        plt.figure(3)
+        for index, class_y in enumerate(predicted_y_test):
+            color = "blue" if class_y <= 0 else "red"
+            plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color, label=class_y)
+        plt.title("Results", fontweight="bold")
+        plt.grid()
+        plt.xlabel("coeff_1", fontweight="bold")
+        plt.ylabel("coeff_2", fontweight="bold")
+
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = OrderedDict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys())
 
     plt.show()
 
 
 
-def calculate_ROC_curve(predicted_y_test_without_class, y_real, min_threshold, max_threshold, number_of_samples, plotting=True):
+def calculate_ROC_curve(predicted_y_test_without_class, y_real, min_threshold, max_threshold, number_of_samples, plotting=False):
     thresholds = np.linspace(start=min_threshold, stop=max_threshold, num=number_of_samples)
     sensitivities = np.empty_like(thresholds)
     specifities = np.empty_like(thresholds)
@@ -130,6 +165,27 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
     X_test = read_with_pickle(directory + "/" + "X_test.pkl")
     X_train = read_with_pickle(directory + "/" + "X_train.pkl")
 
+    plotting = False
+    if plotting is True:
+        for patient in X_train:
+            if X_train[patient]['diagnose'] == "aftdb":
+                channel0 = X_train[patient]['channel0'][0].get_signal()
+                channel1 = X_train[patient]['channel1'][0].get_signal()
+
+                plt.figure(1).clf()
+                plt.subplot(2,1,1)
+                plt.plot(channel0)
+                plt.ylabel("ECG 0", fontweight='bold')
+                plt.title("Channel 0", fontweight='bold')
+                plt.xlabel("n", fontweight='bold')
+                plt.subplot(2,1,2)
+                plt.plot(channel1)
+                plt.title("Channel 1", fontweight='bold')
+                plt.ylabel("ECG 1", fontweight='bold')
+                plt.xlabel("n", fontweight='bold')
+                plt.tight_layout()
+                plt.show()
+            
     # ---------------------------WAVELET-DATASET----------------------------
     if dataset_type == "wavelets":
         X_test_wavelets_coeffs, y_test_info = transform_dataset_into_wavelets_coeffs_dataset(X_test, list_of_wavelets)  # , "dmey", "haar")
@@ -158,6 +214,7 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         X_test_SNN = X_test_SNN.astype('float')
         y_test_SNN = [1 if y_label == "aftdb" else 0 for y_label in y_test_info[:, 0]]
 
+    data_visuatlizate(X_test_SNN, y_test_info, y_train_info, X_train_SNN)
 
 
     # -------------------------Classification-----------------------------
@@ -178,7 +235,7 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
 
         # ROC
         calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-2,
-                            max_threshold=2, number_of_samples=2000)
+                            max_threshold=2, number_of_samples=2000, plotting=True)
         predicted_y_test = [0 if element < 0 else 1 for element in predicted_y_test]
         print(predicted_y_test)
         # Quality
@@ -187,8 +244,9 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         print("Czułość:", quality["sensitivity"])
 
         if data_visualisation is True:
-            data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
+            data_visuatlizate(X_test_SNN=X_test_SNN, y_test_info=y_test_info, y_train_info=y_train_info, X_train_SNN=X_train_SNN, predicted_y_test=predicted_y_test)
 
+                #X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
     if knn_go is True:
         # --------------------------K-NN Klasyfikacja------------------------
         predicted_y_test = []
@@ -204,11 +262,12 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
                 predicted_y_values.append(predicted_y_value)
                 predicted_y_test.append(1) if predicted_y_value > 0.5 else predicted_y_test.append(0)
 
-            sens, one_minus_spec =  calculate_ROC_curve(predicted_y_test_without_class=predicted_y_values, y_real=y_test_SNN, min_threshold=-2,
-                                max_threshold=2, number_of_samples=50, plotting=False)
-
-            predicted_y_values = []
-            predicted_y_test = []
+            sens, one_minus_spec =  calculate_ROC_curve(predicted_y_test_without_class=predicted_y_values, y_real=y_test_SNN, min_threshold=0.5,
+                                max_threshold=0.5, number_of_samples=1, plotting=False)
+            print(sens, one_minus_spec)
+            if len(k_neighbors_list)>1:
+                predicted_y_values = []
+                predicted_y_test = []
 
             sensitivities.append(sens)
             one_minus_specifities.append(one_minus_spec)
@@ -216,7 +275,7 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         plt.figure(1)
 
         for index in range(len(k_neighbors_list)):
-            plt.plot(one_minus_specifities[index], sensitivities[index], "-o", label="k=" + str(k_neighbors_list[index]))
+            plt.plot(one_minus_specifities[index], sensitivities[index], "-", label="k=" + str(k_neighbors_list[index]))
             plt.legend()
         plt.plot([0, 1], [0, 1], "m")
         plt.axis([0, 1, 0, 1])
@@ -232,8 +291,23 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
             # print("Czułość:", quality["sensitivity"])
 
         if data_visualisation is True:
-            data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
+            #data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
 
+            plt.figure(3)
+            for index, class_y in enumerate(predicted_y_test):
+                color = "blue" if class_y <= 0 else "red"
+                plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color,
+                            label=class_y)
+            plt.title("Results", fontweight="bold")
+            plt.grid()
+            plt.xlabel("coeff_1", fontweight="bold")
+            plt.ylabel("coeff_2", fontweight="bold")
+
+            handles, labels = plt.gca().get_legend_handles_labels()
+            by_label = OrderedDict(zip(labels, handles))
+            plt.legend(by_label.values(), by_label.keys())
+
+        plt.show()
     if snn_go is True:
 
         sensitivities = []
@@ -243,35 +317,74 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
             # ----------------------------SNN--------------------------------------
             number_of_input_neurons = len(X_train_SNN[0])
             nn = SNN.NeuralNetwork([number_of_input_neurons, int(hidden_neuron), 1])
-            nn.fit(X_train_SNN, y_train_SNN)
+            nn.fit(X_train_SNN, y_train_SNN, X_test=X_test_SNN, y_test=y_test_SNN, epochs=500000)
+
+            #SAVE
+            save_with_pickle(nn, os.path.join(os.getcwd(), "results_ML", "nn" + str(int(hidden_neuron)) + ".pkl"))
+
+            print("Wagi sieci", nn._weights)
             predicted_y_test = [nn.predict(e).ravel() for e in X_test_SNN]
 
             # ROC
             sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
                                 max_threshold=1, number_of_samples=2000)
 
-            predicted_y_values = []
-            predicted_y_test = []
+            if len(list_of_hidden_neurons) > 1:
+                predicted_y_values = []
+                predicted_y_test = []
+
 
             sensitivities.append(sens)
             one_minus_specifities.append(one_minus_spec)
 
         plt.figure(1)
+        plt.clf()
 
         for index in range(len(list_of_hidden_neurons)):
-            plt.plot(one_minus_specifities[index], sensitivities[index], "-o", label="hidden neurons=" + str(int(list_of_hidden_neurons[index])))
-            plt.legend()
+            x = list(one_minus_specifities[index])
+            print(x)
+
+            y = list(sensitivities[index])
+            print(y)
+
+            plt.plot(x, y, linestyle='-', label="hidden neurons=" + str(int(list_of_hidden_neurons[index])))
+
+        plt.legend()
+        plt.grid()
 
         plt.plot([0, 1], [0, 1], "m")
         plt.axis([0, 1, 0, 1])
         plt.ylabel("sensitivity", fontweight="bold")
         plt.xlabel("1-specifity", fontweight="bold")
         plt.title("ROC curve", fontweight="bold")
-        plt.grid()
         plt.show()
 
+        sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN,
+                                                   min_threshold=0.5,
+                                                   max_threshold=0.5, number_of_samples=1, plotting=False)
+        print(sens, one_minus_spec)
+
+
+
         if data_visualisation is True:
-            data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
+            #data_visuatlizate(X_test_SNN, y_test_info, predicted_y_test, y_train_info, X_train_SNN)
+
+            plt.figure(3)
+            for index, class_y in enumerate(predicted_y_test):
+                color = "blue" if class_y <= 0.5 else "red"
+                label = "ptb" if class_y <=0.5 else "af"
+                plt.scatter(X_test_SNN[index, class_no_1 - 1], X_test_SNN[index, class_no_2 - 1], color=color,
+                            label=label)
+            plt.title("Results", fontweight="bold")
+            plt.grid()
+            plt.xlabel("coeff_1", fontweight="bold")
+            plt.ylabel("coeff_2", fontweight="bold")
+
+            handles, labels = plt.gca().get_legend_handles_labels()
+            by_label = OrderedDict(zip(labels, handles))
+            plt.legend(by_label.values(), by_label.keys())
+
+        plt.show()
 
     return X_train_SNN, X_test_SNN, y_train_SNN, y_test_SNN
 
@@ -279,14 +392,20 @@ if __name__ == "__main__":
 
     list_of_wavelets = ["sym6", "db9", "coif10"]
 
+    # font = {'family': 'normal',
+    #          'weight': 'bold',
+    #          'size': 18}
+    #
+    # matplotlib.rc('font', **font)
+
     X_train_SNN, X_test_SNN, y_train_SNN, y_test_SNN = main(
-        dataset_type="wavelets", svm_go=True, snn_go=False, knn_go=False,
-         number_of_hidden_neurons=17, list_of_wavelets=list_of_wavelets,
-        k_neighbors_list=[3,5,7,9,11,13,15,17,21,37,101], list_of_hidden_neurons=list(range(2,20,2)))
+        dataset_type="fft", svm_go=False, snn_go=True, knn_go=False,
+         number_of_hidden_neurons=60, list_of_wavelets=list_of_wavelets,
+        k_neighbors_list=[], list_of_hidden_neurons=[5])
 
     class_no_1 = 1
     class_no_2 = 2
-
+    #list(range(1,16,5))
     # for element, y_label in zip(X_test_SNN, y_test_SNN):
     #     color = "blue" if y_label == 0 else "red"
     #     plt.scatter(element[class_no_1 - 1], element[class_no_2 - 1], color=color)

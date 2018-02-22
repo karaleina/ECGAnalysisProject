@@ -12,7 +12,7 @@ def save_with_pickle(data, pickle_file):
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
 if __name__ == "__main__":
-    aftdb = read_with_pickle("database/step1/aftdb_corrected.pkl")
+    aftdb = read_with_pickle("database/step1/ptb.pkl")
     # n3: CALE ZLE????
     # s9: fala P?
 
