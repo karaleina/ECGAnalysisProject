@@ -233,11 +233,18 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         # Testing
         predicted_y_test = clf.decision_function(X_test_SNN)
 
+        for i in np.arange(-2.0, 2.0, 0.2):
+            sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test,
+                                                       y_real=y_test_SNN,
+                                                       min_threshold=i,
+                                                       max_threshold=i, number_of_samples=1, plotting=False)
+            print("KNN:", i, "sens:", sens, "1-spec", one_minus_spec)
+
         # ROC
         calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-2,
                             max_threshold=2, number_of_samples=2000, plotting=True)
         predicted_y_test = [0 if element < 0 else 1 for element in predicted_y_test]
-        print(predicted_y_test)
+        #print(predicted_y_test)
         # Quality
         quality = calculate_quality_of_classification(y_real=y_test_SNN, y_predictions=predicted_y_test)
         print("Specyficznosc:", quality["specifity"])
@@ -261,10 +268,12 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
                 predicted_y_value = knn_algorithm.getPrediction(neighbours, weighted_prediction=True)
                 predicted_y_values.append(predicted_y_value)
                 predicted_y_test.append(1) if predicted_y_value > 0.5 else predicted_y_test.append(0)
+            for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+                sens, one_minus_spec =  calculate_ROC_curve(predicted_y_test_without_class=predicted_y_values, y_real=y_test_SNN,
+                                    min_threshold=i,
+                                    max_threshold=i, number_of_samples=1, plotting=False)
+                print("KNN:", i, "sens:", sens, "1-spec", one_minus_spec)
 
-            sens, one_minus_spec =  calculate_ROC_curve(predicted_y_test_without_class=predicted_y_values, y_real=y_test_SNN, min_threshold=0.5,
-                                max_threshold=0.5, number_of_samples=1, plotting=False)
-            print(sens, one_minus_spec)
             if len(k_neighbors_list)>1:
                 predicted_y_values = []
                 predicted_y_test = []
@@ -325,9 +334,18 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
             print("Wagi sieci", nn._weights)
             predicted_y_test = [nn.predict(e).ravel() for e in X_test_SNN]
 
+            for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+                sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test,
+                                                           y_real=y_test_SNN,
+                                                           min_threshold=i,
+                                                           max_threshold=i, number_of_samples=1, plotting=False)
+                print("KNN:", i, "sens:", sens, "1-spec", one_minus_spec)
+
             # ROC
             sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN, min_threshold=-0.9,
                                 max_threshold=1, number_of_samples=2000)
+
+
 
             if len(list_of_hidden_neurons) > 1:
                 predicted_y_values = []
@@ -359,10 +377,10 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
         plt.title("ROC curve", fontweight="bold")
         plt.show()
 
-        sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN,
-                                                   min_threshold=0.5,
-                                                   max_threshold=0.5, number_of_samples=1, plotting=False)
-        print(sens, one_minus_spec)
+        # sens, one_minus_spec = calculate_ROC_curve(predicted_y_test_without_class=predicted_y_test, y_real=y_test_SNN,
+        #                                            min_threshold=0.5,
+        #                                            max_threshold=0.5, number_of_samples=1, plotting=False)
+        # print(sens, one_minus_spec)
 
 
 
@@ -399,9 +417,9 @@ if __name__ == "__main__":
     # matplotlib.rc('font', **font)
 
     X_train_SNN, X_test_SNN, y_train_SNN, y_test_SNN = main(
-        dataset_type="fft", svm_go=False, snn_go=True, knn_go=False,
-         number_of_hidden_neurons=60, list_of_wavelets=list_of_wavelets,
-        k_neighbors_list=[], list_of_hidden_neurons=[5])
+        dataset_type="wavelets", svm_go=False, snn_go=True, knn_go=False,
+         number_of_hidden_neurons=None, list_of_wavelets=list_of_wavelets,
+        k_neighbors_list=[], list_of_hidden_neurons=[2,3,4,5,6,7,8,9])
 
     class_no_1 = 1
     class_no_2 = 2

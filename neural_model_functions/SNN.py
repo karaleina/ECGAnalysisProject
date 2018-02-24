@@ -55,28 +55,26 @@ class NeuralNetwork:
         correct_classifitation_rate = correct_classified_number / float(len(real_y))
         return correct_classifitation_rate
 
-    def __validation_criterium_error(self, X_test, real_y_test, X_train, real_y_train):
+    def __calculate_test_error(self, X_test, real_y_test, X_train, real_y_train):
 
         predicted_y_test = [self.predict(e).ravel() for e in X_test]
         correct_classifitation_rate_on_test_set = self.calculate_correct_classified_rate(real_y=real_y_test, predicted_y=predicted_y_test)
+        #predicted_y_train =  [self.predict(e).ravel() for e in X_train[:,1:]]
+        #correct_classifitation_rate_on_train_set = self.calculate_correct_classified_rate(real_y=real_y_train, predicted_y=predicted_y_train)
+        #print(correct_classifitation_rate_on_test_set, correct_classifitation_rate_on_train_set)
 
-        predicted_y_train =  [self.predict(e).ravel() for e in X_train[:,1:]]
-        correct_classifitation_rate_on_train_set = self.calculate_correct_classified_rate(real_y=real_y_train, predicted_y=predicted_y_train)
+        return correct_classifitation_rate_on_test_set
 
-        print(correct_classifitation_rate_on_test_set, correct_classifitation_rate_on_train_set)
-
-        return False
-
-    def fit(self, X, y, X_test, y_test, learning_rate=0.05, epochs=50000000):
+    def fit(self, X, y, X_test, y_test, learning_rate=0.05, epochs=50000000000):
         # Add column of ones to X
         # This is to add the bias unit to the input layer
         ones = np.atleast_2d(np.ones(X.shape[0]))
         X = np.concatenate((ones.T, X), axis=1)
 
         for k in range(epochs):
-            if k % 10000 == 0:
+            if k % 10000 == 1:
                 print ('epochs:', k)
-                if self.__validation_criterium_error(X_test=X_test, real_y_test=y_test, X_train=X, real_y_train=y) is True:
+                if self.__calculate_test_error(X_test=X_test, real_y_test=y_test, X_train=X, real_y_train=y)/k <= 0.00001:
                     break
 
             i = np.random.randint(X.shape[0])
