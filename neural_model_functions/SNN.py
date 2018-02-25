@@ -74,7 +74,7 @@ class NeuralNetwork:
         for k in range(epochs):
             if k % 10000 == 1:
                 print ('epochs:', k)
-                if self.__calculate_test_error(X_test=X_test, real_y_test=y_test, X_train=X, real_y_train=y)/k <= 0.00001:
+                if self.__calculate_test_error(X_test=X_test, real_y_test=y_test, X_train=X, real_y_train=y)/k <= 0.00000001:
                     break
 
             i = np.random.randint(X.shape[0])

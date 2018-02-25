@@ -326,7 +326,7 @@ def main(dataset_type="fft", snn_go=False, svm_go=False, knn_go=False,
             # ----------------------------SNN--------------------------------------
             number_of_input_neurons = len(X_train_SNN[0])
             nn = SNN.NeuralNetwork([number_of_input_neurons, int(hidden_neuron), 1])
-            nn.fit(X_train_SNN, y_train_SNN, X_test=X_test_SNN, y_test=y_test_SNN, epochs=500000)
+            nn.fit(X_train_SNN, y_train_SNN, X_test=X_test_SNN, y_test=y_test_SNN, epochs=500000) #500000
 
             #SAVE
             save_with_pickle(nn, os.path.join(os.getcwd(), "results_ML", "nn" + str(int(hidden_neuron)) + ".pkl"))
@@ -417,9 +417,9 @@ if __name__ == "__main__":
     # matplotlib.rc('font', **font)
 
     X_train_SNN, X_test_SNN, y_train_SNN, y_test_SNN = main(
-        dataset_type="wavelets", svm_go=False, snn_go=True, knn_go=False,
+        dataset_type="fft", svm_go=False, snn_go=True, knn_go=False,
          number_of_hidden_neurons=None, list_of_wavelets=list_of_wavelets,
-        k_neighbors_list=[], list_of_hidden_neurons=[2,3,4,5,6,7,8,9])
+        k_neighbors_list=[], list_of_hidden_neurons=[1,2,3,4,5])#,5,6,7,8,9])
 
     class_no_1 = 1
     class_no_2 = 2
